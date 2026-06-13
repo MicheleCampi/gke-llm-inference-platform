@@ -15,6 +15,11 @@ spec:
     path: chart
     helm:
       releaseName: vllm-coldstart-operator
+      # Il tag pubblicato su GHCR e' 0.1.0 (senza v); il default del chart
+      # punta a v0.1.0 inesistente. Override fino al fix upstream.
+      parameters:
+        - name: image.tag
+          value: "0.1.0"
   destination:
     server: https://kubernetes.default.svc
     namespace: vllm-system
