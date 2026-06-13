@@ -82,3 +82,40 @@ resource "google_container_node_pool" "gpu" {
     ]
   }
 }
+
+# Node pool CPU di sistema: ospita ArgoCD, operator e agent observability.
+# Niente taint -> schedulabile dai workload di piattaforma.
+resource "google_container_node_pool" "system" {
+  name           = "system-pool"
+  node_locations = var.system_node_locations
+  location       = var.region
+  cluster        = google_container_cluster.this.name
+  project        = var.project_id
+
+  autoscaling {
+    min_node_count = var.system_min_nodes
+    max_node_count = var.system_max_nodes
+  }
+
+  management {
+    auto_repair  = true
+    auto_upgrade = true
+  }
+
+  node_config {
+    machine_type = var.system_machine_type
+    image_type   = "COS_CONTAINERD"
+
+    workload_metadata_config {
+      mode = "GKE_METADATA"
+    }
+
+    labels = {
+      workload = "system"
+    }
+
+    oauth_scopes = [
+      "https://www.googleapis.com/auth/cloud-platform",
+    ]
+  }
+}

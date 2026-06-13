@@ -70,3 +70,25 @@ variable "gpu_node_locations" {
   type        = list(string)
   default     = ["europe-west4-a"]
 }
+
+# --- System node pool (CPU): regge ArgoCD, operator e Alloy. ---
+variable "system_machine_type" {
+  description = "Machine type per il system node pool CPU"
+  type        = string
+  default     = "e2-standard-2"
+}
+variable "system_min_nodes" {
+  description = "Min nodi system pool (per-zona)"
+  type        = number
+  default     = 1
+}
+variable "system_max_nodes" {
+  description = "Max nodi system pool (per-zona)"
+  type        = number
+  default     = 1
+}
+variable "system_node_locations" {
+  description = "Zone del system pool. Singola zona = 1 nodo (no HA, costo minimo)"
+  type        = list(string)
+  default     = ["europe-west4-a"]
+}

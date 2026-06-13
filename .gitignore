@@ -16,3 +16,7 @@ terraform.rc
 
 # Il lock file VA committato (riproducibilità): non ignorarlo.
 !.terraform.lock.hcl
+
+# Plan salvati (binari, effimeri, possono contenere valori sensibili)
+*.tfplan
+tfplan
