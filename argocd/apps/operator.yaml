@@ -23,6 +23,15 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: vllm-system
+  # Campi defaultati dall'API server sul CRD, assenti nel manifest del chart:
+  # senza questo l'app resta OutOfSync in modo permanente.
+  ignoreDifferences:
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+      name: vllmservices.inference.michelecampi.dev
+      jsonPointers:
+        - /spec/names/listKind
+        - /spec/conversion
   syncPolicy:
     automated:
       prune: true
@@ -30,3 +39,4 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      - RespectIgnoreDifferences=true
