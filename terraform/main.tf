@@ -3,6 +3,22 @@ provider "google" {
   region  = var.region
 }
 
+# API GCP richieste dalla piattaforma. Abilitate via IaC: il repo documenta
+# da sé i prerequisiti, niente "enable" manuale fuori Terraform.
+# disable_on_destroy = false -> al destroy le API restano attive (evita
+# errori di dipendenza al teardown e non tocca altri workload del progetto).
+resource "google_project_service" "required" {
+  for_each = toset([
+    "compute.googleapis.com",
+    "container.googleapis.com",
+  ])
+
+  service = each.key
+
+  disable_on_destroy         = false
+  disable_dependent_services = false
+}
+
 # VPC dedicata: niente default network. Routing regionale.
 resource "google_compute_network" "vpc" {
   name                    = "${var.cluster_name}-vpc"
@@ -23,6 +39,9 @@ resource "google_compute_subnetwork" "subnet" {
 
 module "gke_gpu" {
   source = "./modules/gke-gpu"
+
+  # Il cluster non parte finché le API non sono abilitate.
+  depends_on = [google_project_service.required]
 
   project_id   = var.project_id
   region       = var.region
