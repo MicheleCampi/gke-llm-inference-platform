@@ -1,0 +1,92 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: alloy
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://grafana.github.io/helm-charts
+    chart: alloy
+    targetRevision: 1.10.0
+    helm:
+      releaseName: alloy
+      values: |
+        controller:
+          type: deployment
+          replicas: 1
+        alloy:
+          extraEnv:
+            - name: GC_PROM_URL
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-cloud-credentials
+                  key: url
+            - name: GC_PROM_USER
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-cloud-credentials
+                  key: user
+            - name: GC_PROM_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-cloud-credentials
+                  key: token
+          configMap:
+            content: |
+              discovery.kubernetes "operator" {
+                role = "pod"
+                namespaces {
+                  names = ["vllm-system"]
+                }
+                selectors {
+                  role = "pod"
+                  label = "app.kubernetes.io/name=vllm-coldstart-operator"
+                }
+              }
+
+              discovery.relabel "operator" {
+                targets = discovery.kubernetes.operator.targets
+                rule {
+                  source_labels = ["__meta_kubernetes_pod_container_port_name"]
+                  regex = "metrics"
+                  action = "keep"
+                }
+                rule {
+                  source_labels = ["__meta_kubernetes_namespace"]
+                  target_label = "namespace"
+                }
+                rule {
+                  source_labels = ["__meta_kubernetes_pod_name"]
+                  target_label = "pod"
+                }
+              }
+
+              prometheus.scrape "operator" {
+                targets = discovery.relabel.operator.output
+                forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+              }
+
+              prometheus.remote_write "grafana_cloud" {
+                endpoint {
+                  url = sys.env("GC_PROM_URL")
+                  basic_auth {
+                    username = sys.env("GC_PROM_USER")
+                    password = sys.env("GC_PROM_TOKEN")
+                  }
+                }
+              }
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
