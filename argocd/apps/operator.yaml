@@ -11,7 +11,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/MicheleCampi/vllm-coldstart-operator.git
-    targetRevision: v0.2.0
+    targetRevision: v0.2.1
     path: chart
     helm:
       releaseName: vllm-coldstart-operator
