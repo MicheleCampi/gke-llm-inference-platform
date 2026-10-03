@@ -136,15 +136,34 @@ unformatted Terraform file, a cluster without resource labels, and a token in
 a file. If one is accepted, or
 rejected for another reason, the run fails.
 
-The workflow uses one action, `actions/checkout`, pinned by commit, with
-`contents: read` permissions.
+The validation workflow uses one action, `actions/checkout`, pinned by commit,
+with `contents: read` permissions.
+
+**Plan on pull requests, without keys.**
+[`plan.yml`](.github/workflows/plan.yml) runs `terraform plan` against the real
+state on pull requests to `main`, and writes it to the run summary. GitHub's
+OIDC token is exchanged through Workload Identity Federation for a read-only
+service account that has no key. The pool admits a token only from this
+repository, matched by its numeric repository and owner IDs, and only from a
+job in the `terraform-plan` environment, whose runs wait for a required
+reviewer's approval. The service account holds `browser`,
+`compute.networkViewer`, `container.clusterViewer` and
+`iam.serviceAccountViewer` on the project and `storage.objectViewer` on the
+state bucket only; `init` runs with the lock read-only and `plan` with
+`-lock=false`, since the identity cannot write the lock. The identity is defined
+in [`bootstrap/ci-identity`](bootstrap/ci-identity/), a Terraform root of its
+own with its own state, so a `terraform destroy` of the cluster leaves it in
+place. The plan workflow adds `google-github-actions/auth`, pinned by commit.
 
 ## Bootstrap (one-time, out of band)
 
 These resources are created with `gcloud`, outside Terraform, and survive
-`terraform destroy`. `PROJECT_ID` is your project; this repository's own value
+`terraform destroy`; the CI identity, last below, is the exception: a Terraform
+root of its own, applied once. `PROJECT_ID` is your project; this repository's own value
 appears in `terraform/terraform.tfvars`, in the bucket name of
-`terraform/versions.tf`, and twice in `monitoring/grafana-secret.yaml`.
+`terraform/versions.tf`, twice in `monitoring/grafana-secret.yaml`, in
+`bootstrap/ci-identity/terraform.tfvars` and `versions.tf`, and in the service
+account of `.github/workflows/plan.yml`.
 
     # Terraform state bucket
     gcloud storage buckets create gs://PROJECT_ID-tfstate --project=PROJECT_ID \
@@ -165,6 +184,12 @@ appears in `terraform/terraform.tfvars`, in the bucket name of
     gcloud secrets add-iam-policy-binding grafana-cloud-remote-write \
       --member="serviceAccount:eso-grafana-reader@PROJECT_ID.iam.gserviceaccount.com" \
       --role="roles/secretmanager.secretAccessor"
+
+    # CI identity for the plan workflow (set the IDs in its terraform.tfvars)
+    cd bootstrap/ci-identity && terraform init && terraform apply && cd ../..
+    # The environment the plan job runs in, with you as required reviewer
+    printf '%s' '{"wait_timer":0,"prevent_self_review":false,"reviewers":[{"type":"User","id":YOUR_GITHUB_USER_ID}],"deployment_branch_policy":null}' | \
+      gh api -X PUT repos/OWNER/REPO/environments/terraform-plan --input -
 
 ## Run it
 
@@ -204,13 +229,17 @@ appears in `terraform/terraform.tfvars`, in the bucket name of
   been applied to a live cluster.
 - One GPU node and the default rolling-update strategy: finding 4 can recur.
 - Lab profile: non-HA ArgoCD, a single-zone system pool.
-- The bootstrap above is outside Terraform.
+- The bootstrap above is outside Terraform, except the CI identity, a Terraform
+  root applied by hand.
 - Alloy ships the operator's metrics to Grafana Cloud; there are no alerting
   rules or dashboards in this repository.
 - The hardening of 2026-10-03 (node service account, control-plane authorized
   networks, explicit `disable-legacy-endpoints`, flow logs, labels) passes
   `terraform validate`, trivy and the CI self-test, but has not been applied
   to a live cluster yet.
+- The plan job has run only against an empty state, with the cluster destroyed:
+  its read-only roles have not yet been exercised by a refresh of live
+  resources.
 - Two trivy findings are accepted until the next live run, both in
   [`.trivyignore`](.trivyignore): no NetworkPolicy enforcement (GCP-0056),
   since enforcement without written policies changes no traffic, and nodes
