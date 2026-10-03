@@ -30,9 +30,11 @@ same pin-eso-chart      "$(yq '.spec.source.targetRevision' argocd/apps/external
 same pin-operator       "$(yq '.spec.source.targetRevision' argocd/apps/operator.yaml)"           "$OPERATOR_TAG"
 
 echo "== terraform"
-check tf-fmt      terraform -chdir=terraform fmt -check -recursive -diff
+check tf-fmt      sh -c "terraform -chdir=terraform fmt -check -recursive -diff && terraform -chdir=bootstrap fmt -check -recursive -diff"
 check tf-init     terraform -chdir=terraform init -backend=false -lockfile=readonly -input=false -no-color
 check tf-validate terraform -chdir=terraform validate -no-color
+check bootstrap-init     terraform -chdir=bootstrap/ci-identity init -backend=false -lockfile=readonly -input=false -no-color
+check bootstrap-validate terraform -chdir=bootstrap/ci-identity validate -no-color
 
 echo "== IaC misconfigurations (trivy; checks pinned by digest, exceptions in .trivyignore)"
 TRIVY=(trivy config --quiet --cache-dir "$W/trivy-cache" --checks-bundle-repository "$TRIVY_CHECKS")
@@ -43,10 +45,10 @@ trivy_fail_ids() { # dir -> sorted IDs of failed checks, with no ignore file
 # Scan exactly what git would commit: tracked files plus new ones not ignored.
 # A working tree can hold ignored files, such as a saved plan, whose config
 # snapshot trivy would scan as well.
-IAC="$W/iac"; mkdir -p "$IAC" && git ls-files -co --exclude-standard terraform | tar -cf - -T - | tar -xf - -C "$IAC"
-check trivy "${TRIVY[@]}" --exit-code 1 --ignorefile .trivyignore "$IAC/terraform"
+IAC="$W/iac"; mkdir -p "$IAC" && git ls-files -co --exclude-standard terraform bootstrap | tar -cf - -T - | tar -xf - -C "$IAC"
+check trivy "${TRIVY[@]}" --exit-code 1 --ignorefile .trivyignore "$IAC"
 # An exception that is no longer needed fails the run instead of lingering.
-same trivy-exceptions-still-needed "$(trivy_fail_ids "$IAC/terraform")" "$(grep -o -E '^[A-Z]+-[0-9]+' .trivyignore | sort -u | paste -sd' ')"
+same trivy-exceptions-still-needed "$(trivy_fail_ids "$IAC")" "$(grep -o -E '^[A-Z]+-[0-9]+' .trivyignore | sort -u | paste -sd' ')"
 
 echo "== schemas from the CRDs of the deployed versions (served versions only)"
 cat > "$W/served.py" <<'PY'

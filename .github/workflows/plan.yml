@@ -1,0 +1,50 @@
+name: plan
+
+# terraform plan against the real state, without keys: GitHub's OIDC token is
+# exchanged through Workload Identity Federation for a read-only service
+# account (bootstrap/ci-identity). The job runs in the terraform-plan
+# environment, whose runs wait for a required reviewer; the federation admits
+# only that environment of this repository.
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plan-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    name: terraform plan (read-only, no keys)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: terraform-plan
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install pinned tools (checksums in ci/tools.lock)
+        run: bash ci/install-tools.sh
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: projects/289089655949/locations/global/workloadIdentityPools/github-actions/providers/gke-llm-inference-platform
+          service_account: terraform-plan-ci@rosy-precinct-477218-u8.iam.gserviceaccount.com
+      - name: terraform plan (no state lock; the identity cannot write)
+        run: |
+          set -o pipefail
+          export PATH="$PWD/.ci-bin:$PATH"
+          terraform -chdir=terraform init -input=false -lockfile=readonly -no-color
+          terraform -chdir=terraform plan -input=false -lock=false -no-color | tee plan.txt
+          {
+            echo "### terraform plan"
+            echo '```'
+            tail -n 60 plan.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

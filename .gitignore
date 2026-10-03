@@ -23,3 +23,6 @@ tfplan
 
 # CI tools installed by ci/install-tools.sh
 .ci-bin/
+
+# Credentials written by google-github-actions/auth (its README asks for this)
+gha-creds-*.json

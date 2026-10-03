@@ -3,12 +3,14 @@ provider "google" {
   region  = var.region
 }
 
-# GCP APIs the cluster needs. Secret Manager is enabled out of band, with
-# the resources that use it (README, Bootstrap).
+# GCP APIs the cluster needs; Cloud Resource Manager serves the project IAM
+# policy behind google_project_iam_member. Secret Manager is enabled out of
+# band, with the resources that use it (README, Bootstrap).
 # disable_on_destroy = false -> the APIs stay enabled on destroy (avoids
 # dependency errors at teardown and leaves other workloads in the project alone).
 resource "google_project_service" "required" {
   for_each = toset([
+    "cloudresourcemanager.googleapis.com",
     "compute.googleapis.com",
     "container.googleapis.com",
     "iam.googleapis.com",
