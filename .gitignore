@@ -14,9 +14,9 @@ override.tf.json
 .terraformrc
 terraform.rc
 
-# Il lock file VA committato (riproducibilità): non ignorarlo.
+# The lock file IS committed (reproducibility): do not ignore it.
 !.terraform.lock.hcl
 
-# Plan salvati (binari, effimeri, possono contenere valori sensibili)
+# Saved plans (binary, ephemeral, may contain sensitive values)
 *.tfplan
 tfplan

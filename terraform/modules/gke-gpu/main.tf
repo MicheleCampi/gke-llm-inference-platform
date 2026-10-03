@@ -1,22 +1,22 @@
-# Cluster regionale: control plane gestito, default node pool rimosso.
-# I workload girano su node pool dedicate e dichiarate esplicitamente.
+# Regional cluster: managed control plane, default node pool removed.
+# Workloads run on dedicated, explicitly declared node pools.
 resource "google_container_cluster" "this" {
   name     = var.cluster_name
   location = var.region
   project  = var.project_id
 
-  # Pattern canonico: si crea il cluster senza il default node pool
-  # e si gestisce ogni pool come risorsa separata.
+  # Canonical pattern: create the cluster without the default node pool
+  # and manage each pool as a separate resource.
   remove_default_node_pool = true
   initial_node_count       = 1
 
   network    = var.network
   subnetwork = var.subnetwork
 
-  # VPC-native: i secondary range pods/services sono gestiti da GKE.
+  # VPC-native: GKE manages the pods/services secondary ranges.
   ip_allocation_policy {}
 
-  # Workload Identity: niente SA key montate sui nodi, federazione KSA->GSA.
+  # Workload Identity: no service-account keys on the nodes; KSA->GSA federation.
   workload_identity_config {
     workload_pool = "${var.project_id}.svc.id.goog"
   }
@@ -25,12 +25,14 @@ resource "google_container_cluster" "this" {
     channel = var.release_channel
   }
 
-  # Evita distruzioni accidentali del control plane.
+  # Off on purpose: the lab is destroyed after each session, and with
+  # deletion protection on, terraform destroy cannot delete the cluster.
   deletion_protection = false
 }
 
-# Node pool GPU dedicata, scale-to-zero.
-# Acceso solo quando un workload con toleration+nodeSelector lo richiede.
+# Dedicated GPU node pool, scale-to-zero. The autoscaler adds a node when a
+# Pod requests nvidia.com/gpu; GKE's ExtendedResourceToleration admission
+# controller adds the matching toleration, so no nodeSelector is needed.
 resource "google_container_node_pool" "gpu" {
   name           = "gpu-pool"
   node_locations = var.gpu_node_locations
@@ -61,12 +63,12 @@ resource "google_container_node_pool" "gpu" {
       }
     }
 
-    # Workload Identity a livello nodo.
+    # Workload Identity on the node.
     workload_metadata_config {
       mode = "GKE_METADATA"
     }
 
-    # Taint: solo i pod che tollerano nvidia.com/gpu schedulano qui.
+    # Taint: only Pods that tolerate nvidia.com/gpu are scheduled here.
     taint {
       key    = "nvidia.com/gpu"
       value  = "present"
@@ -83,8 +85,8 @@ resource "google_container_node_pool" "gpu" {
   }
 }
 
-# Node pool CPU di sistema: ospita ArgoCD, operator e agent observability.
-# Niente taint -> schedulabile dai workload di piattaforma.
+# CPU system pool: runs ArgoCD, the operator and the observability agent.
+# No taint, so platform workloads schedule here.
 resource "google_container_node_pool" "system" {
   name           = "system-pool"
   node_locations = var.system_node_locations

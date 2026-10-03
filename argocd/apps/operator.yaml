@@ -41,8 +41,8 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: vllm-system
-  # Il chart dichiara questi campi come array vuoti; l'API server li droppa,
-  # generando un diff permanente. Ignorati per path mirato.
+  # The chart declares these fields as empty arrays; the API server drops them,
+  # which leaves a permanent diff. Ignored by targeted path.
   ignoreDifferences:
     - group: apiextensions.k8s.io
       kind: CustomResourceDefinition

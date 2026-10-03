@@ -1,31 +1,31 @@
 output "cluster_name" {
-  description = "Nome del cluster GKE"
+  description = "GKE cluster name"
   value       = google_container_cluster.this.name
 }
 
 output "cluster_endpoint" {
-  description = "Endpoint del control plane"
+  description = "Control-plane endpoint"
   value       = google_container_cluster.this.endpoint
   sensitive   = true
 }
 
 output "cluster_ca_certificate" {
-  description = "CA certificate del cluster (base64)"
+  description = "Cluster CA certificate (base64)"
   value       = google_container_cluster.this.master_auth[0].cluster_ca_certificate
   sensitive   = true
 }
 
 output "cluster_location" {
-  description = "Location del cluster"
+  description = "Cluster location"
   value       = google_container_cluster.this.location
 }
 
 output "workload_identity_pool" {
-  description = "Workload Identity pool del cluster"
+  description = "Cluster Workload Identity pool"
   value       = "${var.project_id}.svc.id.goog"
 }
 
 output "gpu_node_pool_name" {
-  description = "Nome del node pool GPU"
+  description = "GPU node pool name"
   value       = google_container_node_pool.gpu.name
 }

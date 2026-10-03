@@ -3,10 +3,10 @@ provider "google" {
   region  = var.region
 }
 
-# API GCP richieste dalla piattaforma. Abilitate via IaC: il repo documenta
-# da sé i prerequisiti, niente "enable" manuale fuori Terraform.
-# disable_on_destroy = false -> al destroy le API restano attive (evita
-# errori di dipendenza al teardown e non tocca altri workload del progetto).
+# GCP APIs the cluster needs. Secret Manager is enabled out of band, with
+# the resources that use it (README, Bootstrap).
+# disable_on_destroy = false -> the APIs stay enabled on destroy (avoids
+# dependency errors at teardown and leaves other workloads in the project alone).
 resource "google_project_service" "required" {
   for_each = toset([
     "compute.googleapis.com",
@@ -19,15 +19,15 @@ resource "google_project_service" "required" {
   disable_dependent_services = false
 }
 
-# VPC dedicata: niente default network. Routing regionale.
+# Dedicated VPC, not the default network. Regional routing.
 resource "google_compute_network" "vpc" {
   name                    = "${var.cluster_name}-vpc"
   auto_create_subnetworks = false
   routing_mode            = "REGIONAL"
 }
 
-# Subnet primaria. I secondary range (pods/services) li gestisce GKE
-# via ip_allocation_policy nel modulo.
+# Primary subnet. GKE manages the secondary ranges (pods/services)
+# through ip_allocation_policy in the module.
 resource "google_compute_subnetwork" "subnet" {
   name          = "${var.cluster_name}-subnet"
   ip_cidr_range = var.subnet_cidr
@@ -40,7 +40,7 @@ resource "google_compute_subnetwork" "subnet" {
 module "gke_gpu" {
   source = "./modules/gke-gpu"
 
-  # Il cluster non parte finché le API non sono abilitate.
+  # The cluster is not created until the APIs are enabled.
   depends_on = [google_project_service.required]
 
   project_id   = var.project_id
@@ -50,7 +50,7 @@ module "gke_gpu" {
   network    = google_compute_network.vpc.id
   subnetwork = google_compute_subnetwork.subnet.id
 
-  # GPU: scale-to-zero, acceso solo in Fase 3.
+  # GPU pool: scale-to-zero; a node exists only while a Pod requests a GPU.
   gpu_type           = var.gpu_type
   gpu_machine_type   = var.gpu_machine_type
   min_gpu_nodes      = var.min_gpu_nodes

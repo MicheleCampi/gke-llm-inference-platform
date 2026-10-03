@@ -125,15 +125,30 @@ Cloud via Alloy. Then `terraform destroy`: 6 resources destroyed, state clean.
   from spec, extraArgs, /dev/shm).
 - v0.2.1: LD_LIBRARY_PATH for managed-cluster GPU pods.
 
-## Article angle
-
-The honest debugging arc is the value: an operator that passed CI and kind is
-not the same as an operator that runs on real managed GPUs. Three layers of
-environment assumptions (admission, invocation, dynamic linker) each hid the
-next. This is platform-engineering reality, not a happy-path demo.
-
 ## Open / to verify next deploy
 
 - monitoring ignoreDifferences fix (commit e9fd20e) applied cold, not yet
   validated on a live cluster. Confirm with `argocd app diff monitoring` on next
   apply; refine the jsonPointer if a different field still drifts.
+
+## Amendments (2026-10-03)
+
+Added on review before publication. Above this section the 2026-06-14 log is
+unchanged by that review, except that a section of internal notes ("Article
+angle") was removed.
+
+- A1. Line 120, "6 resources destroyed": the destroy output was not kept. The
+  Terraform state, versioned in the GCS backend, held 6 resources with 7
+  instances before the destroy (version written 2026-06-13T17:41:31Z) and
+  none after it (2026-06-14T09:55:56Z).
+- A2. Line 119, the phase metric "flowing to Grafana Cloud": no capture of the
+  metric in Grafana Cloud was kept. The evidence
+  ([docs/evidence/e2e-2026-06-14/](evidence/e2e-2026-06-14/)) shows the
+  `alloy` Application Synced and Healthy, not the metric arriving.
+- A3. Lines 21-22 (the cluster's RuntimeClasses) and 75-77 (driver version and
+  installer log): no capture was kept.
+- A4. Lines 79-81, "confirmed via llm-d's GKE docs": the page was not recorded,
+  so the statement about vLLM's CUDA 12.8+ base image has no source here.
+  What the kept evidence shows is the outcome: with v0.2.1 setting
+  `LD_LIBRARY_PATH=/usr/local/nvidia/lib64`, vLLM detected the CUDA platform
+  and served a completion.

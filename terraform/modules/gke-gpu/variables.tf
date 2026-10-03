@@ -4,22 +4,22 @@ variable "project_id" {
 }
 
 variable "region" {
-  description = "GCP region for the regional cluster (es. europe-west4)"
+  description = "GCP region for the regional cluster (e.g. europe-west4)"
   type        = string
 }
 
 variable "cluster_name" {
-  description = "Nome del cluster GKE"
+  description = "GKE cluster name"
   type        = string
 }
 
 variable "network" {
-  description = "Self-link o nome della VPC (creata dalla root, passata come input)"
+  description = "VPC self-link or name (created by the root module, passed in)"
   type        = string
 }
 
 variable "subnetwork" {
-  description = "Self-link o nome della subnet"
+  description = "Subnet self-link or name"
   type        = string
 }
 
@@ -30,65 +30,65 @@ variable "release_channel" {
 }
 
 variable "gpu_machine_type" {
-  description = "Machine type per il node pool GPU (L4 richiede famiglia G2)"
+  description = "Machine type for the GPU node pool (L4 requires the G2 family)"
   type        = string
   default     = "g2-standard-4"
 }
 
 variable "gpu_type" {
-  description = "Tipo di acceleratore GPU"
+  description = "GPU accelerator type"
   type        = string
   default     = "nvidia-l4"
 }
 
 variable "gpu_count" {
-  description = "Numero di GPU per nodo"
+  description = "GPUs per node"
   type        = number
   default     = 1
 }
 
 variable "gpu_driver_version" {
-  description = "Versione driver gestita da GKE: DEFAULT, LATEST, INSTALLATION_DISABLED"
+  description = "GKE-managed driver version: DEFAULT, LATEST, INSTALLATION_DISABLED"
   type        = string
   default     = "DEFAULT"
 }
 
 variable "min_gpu_nodes" {
-  description = "Min nodi GPU (0 = scale-to-zero)"
+  description = "Minimum GPU nodes (0 = scale-to-zero)"
   type        = number
   default     = 0
 }
 
 variable "max_gpu_nodes" {
-  description = "Max nodi GPU"
+  description = "Maximum GPU nodes"
   type        = number
   default     = 1
 }
 
 variable "gpu_node_locations" {
-  description = "Zone in cui confinare il node pool GPU (quota L4 per-zona)"
+  description = "Zones the GPU node pool is confined to"
   type        = list(string)
   default     = ["europe-west4-a"]
 }
 
-# --- System node pool (CPU): regge ArgoCD, operator e Alloy. ---
+# --- System node pool (CPU): runs ArgoCD, the operator and Alloy. ---
 variable "system_machine_type" {
-  description = "Machine type per il system node pool CPU"
+  description = "Machine type for the CPU system node pool"
   type        = string
   default     = "e2-standard-2"
 }
 variable "system_min_nodes" {
-  description = "Min nodi system pool (per-zona)"
+  description = "Minimum system-pool nodes (per zone)"
   type        = number
   default     = 1
 }
 variable "system_max_nodes" {
-  description = "Max nodi system pool (per-zona)"
+  description = "Maximum system-pool nodes (per zone)"
   type        = number
   default     = 1
 }
 variable "system_node_locations" {
-  description = "Zone del system pool. Singola zona = 1 nodo (no HA, costo minimo)"
+  description = "System-pool zones. One zone = 1 node (no HA, lowest cost)"
   type        = list(string)
   default     = ["europe-west4-a"]
 }

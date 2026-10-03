@@ -1,0 +1,26 @@
+=== Phase 3 e2e evidence — 2026-06-14T09:06:18Z ===
+
+--- ArgoCD apps ---
+NAME                      REV      SYNC        HEALTH
+alloy                     1.10.0   Synced      Healthy
+argocd                    <none>   Synced      Healthy
+external-secrets          2.6.0    Synced      Healthy
+monitoring                main     OutOfSync   Healthy
+root                      main     Synced      Healthy
+vllm-coldstart-operator   v0.2.1   Synced      Healthy
+
+--- VllmService status ---
+qwen-7b: phase=Ready msg="1/1 replicas ready and warm"
+
+--- Pod su gpu-pool ---
+NAME                      READY   STATUS    RESTARTS   AGE     IP           NODE                                            NOMINATED NODE   READINESS GATES
+qwen-7b-8c4548cc9-ck56t   1/1     Running   0          9m39s   10.100.1.9   gke-capstone-inference-gpu-pool-1709bf4b-s5gk   <none>           <none>
+
+--- vLLM platform detection + args ---
+INFO 06-14 01:58:29 [__init__.py:216] Automatically detected platform cuda.
+[1;36m(APIServer pid=1)[0;0m INFO 06-14 01:58:41 [utils.py:233] non-default args: {'model_tag': 'Qwen/Qwen2.5-7B-Instruct', 'host': '0.0.0.0', 'model': 'Qwen/Qwen2.5-7B-Instruct', 'max_model_len': 8192, 'enforce_eager': True}
+INFO 06-14 01:59:01 [__init__.py:216] Automatically detected platform cuda.
+[1;36m(EngineCore_DP0 pid=32)[0;0m INFO 06-14 02:02:04 [weight_utils.py:413] Time spent downloading weights for Qwen/Qwen2.5-7B-Instruct: 172.033213 seconds
+[1;36m(EngineCore_DP0 pid=32)[0;0m INFO 06-14 02:03:11 [core.py:210] init engine (profile, create kv cache, warmup model) took 2.47 seconds
+[1;36m(APIServer pid=1)[0;0m INFO 06-14 02:03:13 [api_server.py:1912] Starting vLLM API server 0 on http://0.0.0.0:8000
+[1;36m(APIServer pid=1)[0;0m INFO:     Application startup complete.

@@ -1,13 +1,13 @@
 # ArgoCD bootstrap values — chart argo/argo-cd 9.5.21 (appVersion v3.4.3)
 #
-# Profilo: lab single-node CPU (system-pool e2-standard-2).
-# - Modalità non-HA: default del chart (1 replica/componente, no redis-ha).
-#   L'HA richiederebbe >=3 worker; fuori scope per questo lab effimero.
-# - CRD ArgoCD gestiti dal chart via templates/ (default crds.install=true).
-#   Rilevante per il self-manage: niente CRD Helm-immutable in crds/.
-# - Accesso UI via `kubectl port-forward` (service ClusterIP, default).
-#   Nessun Ingress/LoadBalancer: zero IP pubblico, zero superficie esposta.
+# Profile: single-node CPU lab (system-pool, e2-standard-2).
+# - Non-HA: the chart's default (1 replica per component, no redis-ha).
+#   HA would need >=3 workers; out of scope for this ephemeral lab.
+# - ArgoCD CRDs managed by the chart through templates/ (default crds.install=true).
+#   This matters for self-management: no Helm-immutable CRDs in crds/.
+# - UI through `kubectl port-forward` (ClusterIP service, the default).
+#   No Ingress or LoadBalancer: no public IP, no exposed surface.
 #
-# Override funzionali volutamente assenti: i default ufficiali sono corretti
-# per questo profilo. Le metriche per la pipeline Alloy/Mimir verranno
-# abilitate nel blocco observability, non qui.
+# No functional overrides on purpose: the official defaults fit this
+# profile. ArgoCD's own metrics are not scraped: the Alloy pipeline
+# (argocd/apps/alloy.yaml) collects the operator's metrics only.

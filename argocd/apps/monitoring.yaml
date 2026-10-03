@@ -16,10 +16,10 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
-  # ESO popola il Secret grafana-cloud-credentials a runtime (creationPolicy:
-  # Owner), quindi il suo /data diverge sempre da Git (dove non esiste): ArgoCD
-  # lo segnala OutOfSync pur essendo Healthy. Ignoriamo data + i campi gestiti
-  # dal controller external-secrets.
+  # ESO fills the Secret grafana-cloud-credentials at runtime (creationPolicy:
+  # Owner), so its /data always differs from Git, where it does not exist:
+  # ArgoCD reports it OutOfSync while Healthy. Ignore /data and the fields
+  # managed by the external-secrets controller.
   ignoreDifferences:
     - group: ""
       kind: Secret
