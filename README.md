@@ -1,5 +1,7 @@
 # gke-llm-inference-platform
 
+[![ci](https://github.com/MicheleCampi/gke-llm-inference-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/MicheleCampi/gke-llm-inference-platform/actions/workflows/ci.yml)
+
 Terraform-to-GitOps LLM inference platform on GKE: a regional cluster with a
 scale-to-zero L4 GPU pool, and an ArgoCD app-of-apps that deploys
 [vllm-coldstart-operator](https://github.com/MicheleCampi/vllm-coldstart-operator),
@@ -83,6 +85,46 @@ GPU. On GKE, each fix exposed the next assumption
 6. **CRD drift.** The API server drops three CRD fields the chart declares as
    empty arrays; `ignoreDifferences` targets exactly those paths
    (commit `b1ab78d`).
+
+## Continuous integration
+
+Every push to `main` and every pull request runs
+[`ci/install-tools.sh`](ci/install-tools.sh) and then
+[`ci/validate.sh`](ci/validate.sh), the same two scripts a reviewer runs
+locally:
+
+    bash ci/install-tools.sh && bash ci/validate.sh
+
+No cloud credentials, no Terraform state, no cluster. What it checks:
+
+- **Pinned inputs.** Each tool is downloaded at the version in
+  [`ci/tools.lock`](ci/tools.lock) and rejected if its SHA-256 differs. The
+  Helm charts are checked against their package hash, and the operator is
+  fetched at a fixed commit ([`ci/versions.env`](ci/versions.env)). These pins
+  must equal the versions the ArgoCD Applications deploy, or the run fails.
+- **Terraform**: `fmt -check`, `init -backend=false -lockfile=readonly`,
+  `validate`.
+- **Manifests**: `kubeconform -strict` against JSON schemas generated from the
+  CRDs of the deployed chart versions, keeping only the API versions they
+  serve; built-in kinds against `kubernetes-json-schema` at a fixed commit.
+- **Operator values**: the Helm values in
+  [`argocd/apps/operator.yaml`](argocd/apps/operator.yaml) are rendered with
+  the operator's chart, and the `VllmService` that comes out is validated
+  against its CRD. A number where the CRD wants a string, the failure
+  described under Design decisions, is rejected here instead of by the API
+  server.
+- **Secrets and workflow**: gitleaks on the full history, actionlint on the
+  workflow.
+
+**Self-test.** A check that cannot fail proves nothing, so every run also
+feeds in five broken inputs and requires each to be rejected for the reason
+named: a number in `extraArgs`, an unknown field in a `VllmService`, a
+`SecretStore` at an API version the chart does not serve (`v1beta1`), an
+unformatted Terraform file, and a token in a file. If one is accepted, or
+rejected for another reason, the run fails.
+
+The workflow uses one action, `actions/checkout`, pinned by commit, with
+`contents: read` permissions.
 
 ## Bootstrap (one-time, out of band)
 
