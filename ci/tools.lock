@@ -1,0 +1,13 @@
+# Pinned CI dependencies. Every artifact is verified against the SHA-256
+# below before use; a mismatch fails the run. Update a pin by changing the
+# URL and the hash together, after checking the hash against the upstream
+# release's own checksum file.
+#
+# name                url                                                                                                    sha256
+terraform             https://releases.hashicorp.com/terraform/1.15.8/terraform_1.15.8_linux_amd64.zip                        d25ce7b6902013ad905db3d2eab0be4cd905887fe88b81a6171b8d5503c31f3d
+helm                  https://get.helm.sh/helm-v3.21.0-linux-amd64.tar.gz                                                     0093eb572e3d2380f094df162ddb525e219249de88957afe24cfbb19632acd36
+kubeconform           https://github.com/yannh/kubeconform/releases/download/v0.8.0/kubeconform-linux-amd64.tar.gz            9bc2bffbf71f261128533edaf912153948b7ff238f9a531ae6d34466ec287883
+gitleaks              https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz         551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+actionlint            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz      8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+yq                    https://github.com/mikefarah/yq/releases/download/v4.54.1/yq_linux_amd64                                8e34fc298390875de416e6a4afcb8cabeceb25d9aa8506c1a2f9353cf702ea5f
+openapi2jsonschema    https://raw.githubusercontent.com/yannh/kubeconform/02374e583d700721f57300fae78e11acd27ee539/scripts/openapi2jsonschema.py  d145babfbb765004030764e1b4e518bfb7a4bd7f111691a08fa57983b81881f3

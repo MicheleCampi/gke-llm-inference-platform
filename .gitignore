@@ -20,3 +20,6 @@ terraform.rc
 # Saved plans (binary, ephemeral, may contain sensitive values)
 *.tfplan
 tfplan
+
+# CI tools installed by ci/install-tools.sh
+.ci-bin/
