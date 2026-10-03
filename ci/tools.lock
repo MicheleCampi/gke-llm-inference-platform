@@ -11,3 +11,4 @@ gitleaks              https://github.com/gitleaks/gitleaks/releases/download/v8.
 actionlint            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz      8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
 yq                    https://github.com/mikefarah/yq/releases/download/v4.54.1/yq_linux_amd64                                8e34fc298390875de416e6a4afcb8cabeceb25d9aa8506c1a2f9353cf702ea5f
 openapi2jsonschema    https://raw.githubusercontent.com/yannh/kubeconform/02374e583d700721f57300fae78e11acd27ee539/scripts/openapi2jsonschema.py  d145babfbb765004030764e1b4e518bfb7a4bd7f111691a08fa57983b81881f3
+trivy                 https://github.com/aquasecurity/trivy/releases/download/v0.75.0/trivy_0.75.0_Linux-64bit.tar.gz          c6e65abddb348e25f10549df887045629cf28cc72453cd1c63acb717316b3f3f

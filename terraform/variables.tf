@@ -50,3 +50,12 @@ variable "gpu_node_locations" {
   type        = list(string)
   default     = ["europe-west4-a"]
 }
+
+variable "authorized_networks" {
+  description = "CIDRs that may reach the control plane besides the cluster's nodes. Set at apply time with TF_VAR_authorized_networks; empty: nodes only."
+  type = list(object({
+    cidr_block   = string
+    display_name = string
+  }))
+  default = []
+}

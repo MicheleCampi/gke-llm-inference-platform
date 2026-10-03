@@ -11,6 +11,7 @@ resource "google_project_service" "required" {
   for_each = toset([
     "compute.googleapis.com",
     "container.googleapis.com",
+    "iam.googleapis.com",
   ])
 
   service = each.key
@@ -35,6 +36,14 @@ resource "google_compute_subnetwork" "subnet" {
   network       = google_compute_network.vpc.id
 
   private_ip_google_access = true
+
+  # VPC flow logs; a 10-minute aggregation interval and 10% sampling
+  # bound the volume of logs exported to Cloud Logging.
+  log_config {
+    aggregation_interval = "INTERVAL_10_MIN"
+    flow_sampling        = 0.1
+    metadata             = "INCLUDE_ALL_METADATA"
+  }
 }
 
 module "gke_gpu" {
@@ -56,4 +65,7 @@ module "gke_gpu" {
   min_gpu_nodes      = var.min_gpu_nodes
   max_gpu_nodes      = var.max_gpu_nodes
   gpu_node_locations = var.gpu_node_locations
+
+  # Control-plane access: CIDRs passed at apply time (README, Run it).
+  authorized_networks = var.authorized_networks
 }

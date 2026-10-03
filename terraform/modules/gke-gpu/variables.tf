@@ -92,3 +92,21 @@ variable "system_node_locations" {
   type        = list(string)
   default     = ["europe-west4-a"]
 }
+
+variable "authorized_networks" {
+  description = "CIDRs that may reach the control plane besides the cluster's nodes. Empty: nodes only."
+  type = list(object({
+    cidr_block   = string
+    display_name = string
+  }))
+  default = []
+}
+
+variable "resource_labels" {
+  description = "GCE resource labels on the cluster"
+  type        = map(string)
+  default = {
+    environment = "lab"
+    managed-by  = "terraform"
+  }
+}

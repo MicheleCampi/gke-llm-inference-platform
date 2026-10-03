@@ -1,0 +1,13 @@
+# Accepted trivy findings, each with its reason and an expiry date.
+# ci/validate.sh fails if any of them is no longer reported, so an exception
+# cannot outlive its cause.
+
+# GCP-0056, network policy enforcement. Enforcement without NetworkPolicy
+# objects changes no traffic; per-namespace policies need a live cluster to
+# be tested against ArgoCD, external-secrets and Alloy (README, Limits).
+GCP-0056 exp:2027-03-31
+
+# GCP-0059, private nodes. The nodes download the vLLM image and the model
+# weights from the internet; private nodes need Cloud NAT, to be added and
+# tested with the next live run (README, Limits).
+GCP-0059 exp:2027-03-31

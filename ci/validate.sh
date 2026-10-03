@@ -34,6 +34,20 @@ check tf-fmt      terraform -chdir=terraform fmt -check -recursive -diff
 check tf-init     terraform -chdir=terraform init -backend=false -lockfile=readonly -input=false -no-color
 check tf-validate terraform -chdir=terraform validate -no-color
 
+echo "== IaC misconfigurations (trivy; checks pinned by digest, exceptions in .trivyignore)"
+TRIVY=(trivy config --quiet --cache-dir "$W/trivy-cache" --checks-bundle-repository "$TRIVY_CHECKS")
+trivy_fail_ids() { # dir -> sorted IDs of failed checks, with no ignore file
+  "${TRIVY[@]}" --ignorefile "" --format json -o "$W/trivy-ids.json" "$1" >/dev/null 2>&1 &&
+  python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print(" ".join(sorted({m["ID"] for r in d.get("Results") or [] for m in r.get("Misconfigurations") or [] if m["Status"] == "FAIL"})))' "$W/trivy-ids.json"
+}
+# Scan exactly what git would commit: tracked files plus new ones not ignored.
+# A working tree can hold ignored files, such as a saved plan, whose config
+# snapshot trivy would scan as well.
+IAC="$W/iac"; mkdir -p "$IAC" && git ls-files -co --exclude-standard terraform | tar -cf - -T - | tar -xf - -C "$IAC"
+check trivy "${TRIVY[@]}" --exit-code 1 --ignorefile .trivyignore "$IAC/terraform"
+# An exception that is no longer needed fails the run instead of lingering.
+same trivy-exceptions-still-needed "$(trivy_fail_ids "$IAC/terraform")" "$(grep -o -E '^[A-Z]+-[0-9]+' .trivyignore | sort -u | paste -sd' ')"
+
 echo "== schemas from the CRDs of the deployed versions (served versions only)"
 cat > "$W/served.py" <<'PY'
 import sys, yaml
@@ -89,6 +103,8 @@ yq '(select(.kind=="SecretStore") | .apiVersion) = "external-secrets.io/v1beta1"
 expect_reject neg-unserved-api-version "could not find schema for SecretStore" "${KC[@]}" "$W/neg-v1beta1.yaml"
 cp -r terraform "$W/tf" && sed -i 's/^  default     = "europe-west4"$/  default = "europe-west4"/' "$W/tf/variables.tf"
 expect_reject neg-terraform-format "variables.tf" terraform -chdir="$W/tf" fmt -check -recursive
+cp -r "$IAC/terraform" "$W/tf-nolabels" && sed -i '/^  resource_labels = var.resource_labels$/d' "$W/tf-nolabels/modules/gke-gpu/main.tf"
+expect_reject neg-iac-misconfiguration "GCP-0051" "${TRIVY[@]}" --exit-code 1 --ignorefile .trivyignore "$W/tf-nolabels"
 mkdir -p "$W/leak" && printf 'token = "ghp_%s"\n' "$(head -c 300 /dev/urandom | tr -dc 'A-Za-z0-9' | head -c 36)" > "$W/leak/config.txt"
 expect_reject neg-secret "leaks found: 1" gitleaks dir --redact --no-banner "$W/leak"
 

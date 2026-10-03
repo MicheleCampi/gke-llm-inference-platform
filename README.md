@@ -60,6 +60,14 @@ is in [docs/phase3-narrative.md](docs/phase3-narrative.md).
 - **Ephemeral by design**: `deletion_protection = false` so `terraform
   destroy` can delete the cluster; the enabled APIs survive a destroy
   (`disable_on_destroy = false`).
+- **Least privilege for nodes and control plane.** Both pools run as a
+  dedicated service account holding only
+  `roles/container.defaultNodeServiceAccount`, the role GKE documents as the
+  minimum for nodes, instead of the Compute Engine default service account.
+  The control plane accepts connections only from the cluster's nodes and from
+  the CIDRs passed in `authorized_networks` at apply time, none by default, so
+  no operator address is kept in the repository. The subnet exports sampled
+  VPC flow logs, and the cluster carries resource labels.
 
 ## Findings from the real-GPU run
 
@@ -104,6 +112,10 @@ No cloud credentials, no Terraform state, no cluster. What it checks:
   must equal the versions the ArgoCD Applications deploy, or the run fails.
 - **Terraform**: `fmt -check`, `init -backend=false -lockfile=readonly`,
   `validate`.
+- **IaC misconfigurations**: trivy on the Terraform that git would commit,
+  with its checks pinned by OCI digest. Accepted findings are listed in
+  [`.trivyignore`](.trivyignore), each with a reason and an expiry date, and
+  the run fails if one of them is no longer reported.
 - **Manifests**: `kubeconform -strict` against JSON schemas generated from the
   CRDs of the deployed chart versions, keeping only the API versions they
   serve; built-in kinds against `kubernetes-json-schema` at a fixed commit.
@@ -117,10 +129,11 @@ No cloud credentials, no Terraform state, no cluster. What it checks:
   workflow.
 
 **Self-test.** A check that cannot fail proves nothing, so every run also
-feeds in five broken inputs and requires each to be rejected for the reason
+feeds in six broken inputs and requires each to be rejected for the reason
 named: a number in `extraArgs`, an unknown field in a `VllmService`, a
 `SecretStore` at an API version the chart does not serve (`v1beta1`), an
-unformatted Terraform file, and a token in a file. If one is accepted, or
+unformatted Terraform file, a cluster without resource labels, and a token in
+a file. If one is accepted, or
 rejected for another reason, the run fails.
 
 The workflow uses one action, `actions/checkout`, pinned by commit, with
@@ -155,6 +168,8 @@ appears in `terraform/terraform.tfvars`, in the bucket name of
 
 ## Run it
 
+    # The CIDR that may reach the control plane; it is not kept in the repository
+    export TF_VAR_authorized_networks='[{cidr_block="YOUR_IP/32",display_name="operator"}]'
     cd terraform && terraform init && terraform apply && cd ..
     gcloud container clusters get-credentials capstone-inference \
       --region europe-west4 --project PROJECT_ID
@@ -192,6 +207,15 @@ appears in `terraform/terraform.tfvars`, in the bucket name of
 - The bootstrap above is outside Terraform.
 - Alloy ships the operator's metrics to Grafana Cloud; there are no alerting
   rules or dashboards in this repository.
+- The hardening of 2026-10-03 (node service account, control-plane authorized
+  networks, explicit `disable-legacy-endpoints`, flow logs, labels) passes
+  `terraform validate`, trivy and the CI self-test, but has not been applied
+  to a live cluster yet.
+- Two trivy findings are accepted until the next live run, both in
+  [`.trivyignore`](.trivyignore): no NetworkPolicy enforcement (GCP-0056),
+  since enforcement without written policies changes no traffic, and nodes
+  that are not private (GCP-0059), since private nodes need Cloud NAT to pull
+  the vLLM image and the model weights.
 
 ## License
 
