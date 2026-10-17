@@ -105,8 +105,11 @@ locally:
 
 No cloud credentials, no Terraform state, no cluster. What it checks:
 
-- **Pinned inputs.** Each tool is downloaded at the version in
-  [`ci/tools.lock`](ci/tools.lock) and rejected if its SHA-256 differs. The
+- **Pinned inputs.** Each tool is downloaded at the version in the lock of
+  [inference-platform-ci](https://github.com/MicheleCampi/inference-platform-ci)
+  (fetched at a tag that must resolve to the commit pinned in
+  [`ci/platform-ci.env`](ci/platform-ci.env)) and rejected if its SHA-256
+  differs. The
   Helm charts are checked against their package hash, and the operator is
   fetched at the tag ArgoCD deploys, which must resolve to a fixed commit
   ([`ci/versions.env`](ci/versions.env)). The chart versions and the tag must

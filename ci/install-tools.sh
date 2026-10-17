@@ -1,26 +1,20 @@
 #!/usr/bin/env bash
-# Download every tool pinned in ci/tools.lock into $CI_BIN, verifying each
-# artifact's SHA-256 before extracting it. Linux amd64 only.
+# Fetch inference-platform-ci at the tag pinned in ci/platform-ci.env and
+# require the tag to resolve to the pinned commit before running anything
+# from it (so this check cannot come from its own lib.sh). Then install into
+# $CI_BIN, each SHA-256 verified, the eight tools of its lock, and its
+# hash-locked requirements.lock (PyYAML) into $CI_BIN/venv. Linux amd64 only.
+# PLATFORM_CI_ENV replaces ci/platform-ci.env, for testing that a wrong pin
+# fails.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 CI_BIN=${CI_BIN:-$PWD/.ci-bin}
-dl=$(mktemp -d); trap 'rm -rf "$dl"' EXIT
-mkdir -p "$CI_BIN"
-while read -r name url sha; do
-  case "$name" in ''|'#'*) continue ;; esac
-  f="$dl/$(basename "$url")"
-  curl -fsSL --retry 3 -o "$f" "$url"
-  got=$(sha256sum "$f" | cut -d' ' -f1)
-  if [ "$got" != "$sha" ]; then echo "checksum mismatch for $name: expected $sha, got $got" >&2; exit 1; fi
-  case "$f" in
-    *.zip)    python3 -m zipfile -e "$f" "$dl/$name.x" && install -m 0755 "$dl/$name.x/$name" "$CI_BIN/$name" ;;
-    *.tar.gz) mkdir -p "$dl/$name.x" && tar -xzf "$f" -C "$dl/$name.x" && install -m 0755 "$(find "$dl/$name.x" -type f -name "$name" | head -1)" "$CI_BIN/$name" ;;
-    *.py)     install -m 0644 "$f" "$CI_BIN/$name.py" ;;
-    *)        install -m 0755 "$f" "$CI_BIN/$name" ;;
-  esac
-  echo "ok $name ${sha:0:12}"
-done < ci/tools.lock
-. ci/versions.env
-python3 -m venv "$CI_BIN/venv"
-"$CI_BIN/venv/bin/pip" install --quiet --disable-pip-version-check "pyyaml==$PYYAML_VERSION"
-echo "ok pyyaml $PYYAML_VERSION"
+. "${PLATFORM_CI_ENV:-ci/platform-ci.env}"
+P=$CI_BIN/platform-ci
+rm -rf "$P" && mkdir -p "$CI_BIN" && git init -q "$P"
+git -C "$P" fetch -q --depth 1 https://github.com/MicheleCampi/inference-platform-ci.git "refs/tags/$PLATFORM_CI_TAG:refs/tags/$PLATFORM_CI_TAG"
+got=$(git -C "$P" rev-parse --verify -q "refs/tags/$PLATFORM_CI_TAG^{commit}")
+if [ "$got" != "$PLATFORM_CI_COMMIT" ]; then echo "inference-platform-ci $PLATFORM_CI_TAG resolves to $got, not the pinned $PLATFORM_CI_COMMIT" >&2; exit 1; fi
+git -C "$P" checkout -q "$PLATFORM_CI_COMMIT"
+bash "$P/install.sh" "$CI_BIN" "$P/tools.lock" terraform helm kubeconform gitleaks actionlint yq openapi2jsonschema trivy
+bash "$P/install-python.sh" "$CI_BIN/venv" "$P/requirements.lock"

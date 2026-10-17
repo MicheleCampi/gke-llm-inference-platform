@@ -14,15 +14,18 @@ export PATH="$CI_BIN:$CI_BIN/venv/bin:$PATH"
 . ci/versions.env
 W=$(mktemp -d); trap 'rm -rf "$W"' EXIT
 fail=0
-pass() { echo "PASS $1"; }
-check() { local n=$1; shift; if "$@" >"$W/$n.log" 2>&1; then pass "$n"; else echo "FAIL $n"; tail -20 "$W/$n.log"; fail=1; fi; }
-expect_reject() {
-  local n=$1 reason=$2; shift 2
-  if "$@" >"$W/$n.log" 2>&1; then echo "FAIL $n: accepted, should have been rejected"; fail=1
-  elif grep -q -E "$reason" "$W/$n.log"; then echo "PASS $n: rejected ($(grep -m1 -o -E ".{0,40}$reason.{0,40}" "$W/$n.log"))"
-  else echo "FAIL $n: rejected for another reason"; tail -5 "$W/$n.log"; fail=1; fi
-}
-same() { if [ "$2" = "$3" ]; then pass "$1 ($2)"; else echo "FAIL $1: $2 != $3"; fail=1; fi; }
+. ci/platform-ci.env
+# The helpers (pass, check, expect_reject, same, tag_is) and the Kubernetes
+# schema pins come from inference-platform-ci, installed by
+# ci/install-tools.sh. Without them every check would be undefined and fail
+# would stay 0, so a missing file stops the run here instead of letting it
+# report success.
+for f in lib.sh versions.env; do
+  . "$CI_BIN/platform-ci/$f" || { echo "no $CI_BIN/platform-ci/$f: run bash ci/install-tools.sh first" >&2; exit 1; }
+done
+
+echo "== shared CI files at the commit pinned in ci/platform-ci.env"
+same platform-ci-commit "$(git -C "$CI_BIN/platform-ci" rev-parse HEAD)" "$PLATFORM_CI_COMMIT"
 
 echo "== pins match what ArgoCD deploys"
 same pin-argocd-chart   "$(yq '.spec.sources[0].targetRevision' argocd/apps/argocd.yaml)"         "$ARGOCD_CHART_VERSION"
@@ -69,10 +72,6 @@ check chart-argocd pull argo-cd https://argoproj.github.io/argo-helm "$ARGOCD_CH
 check chart-eso    pull external-secrets https://charts.external-secrets.io "$ESO_CHART_VERSION" "$ESO_CHART_SHA256"
 # Fetch the operator at the tag ArgoCD deploys, then require the tag to
 # resolve to the pinned commit: a moved or re-pointed tag fails the run.
-tag_is() { # repo tag commit
-  local got; got=$(git -C "$1" rev-parse --verify -q "refs/tags/$2^{commit}") || { echo "tag $2 not found"; return 1; }
-  [ "$got" = "$3" ] || { echo "tag $2 resolves to $got, not the pinned $3"; return 1; }
-}
 check operator-src sh -c "git init -q '$W/op' && git -C '$W/op' fetch -q --depth 1 https://github.com/MicheleCampi/vllm-coldstart-operator.git 'refs/tags/$OPERATOR_TAG:refs/tags/$OPERATOR_TAG' && git -C '$W/op' checkout -q 'refs/tags/$OPERATOR_TAG'"
 check operator-tag-commit tag_is "$W/op" "$OPERATOR_TAG" "$OPERATOR_COMMIT"
 helm template argocd "$W/argo-cd-$ARGOCD_CHART_VERSION.tgz" 2>/dev/null | python3 "$W/served.py" applications.argoproj.io > "$W/crd-argo.yaml"
