@@ -67,7 +67,14 @@ pull() { # name repo version sha256
 }
 check chart-argocd pull argo-cd https://argoproj.github.io/argo-helm "$ARGOCD_CHART_VERSION" "$ARGOCD_CHART_SHA256"
 check chart-eso    pull external-secrets https://charts.external-secrets.io "$ESO_CHART_VERSION" "$ESO_CHART_SHA256"
-check operator-src sh -c "git init -q '$W/op' && git -C '$W/op' fetch -q --depth 1 https://github.com/MicheleCampi/vllm-coldstart-operator.git '$OPERATOR_COMMIT' && git -C '$W/op' checkout -q FETCH_HEAD && [ \"\$(git -C '$W/op' rev-parse HEAD)\" = '$OPERATOR_COMMIT' ]"
+# Fetch the operator at the tag ArgoCD deploys, then require the tag to
+# resolve to the pinned commit: a moved or re-pointed tag fails the run.
+tag_is() { # repo tag commit
+  local got; got=$(git -C "$1" rev-parse --verify -q "refs/tags/$2^{commit}") || { echo "tag $2 not found"; return 1; }
+  [ "$got" = "$3" ] || { echo "tag $2 resolves to $got, not the pinned $3"; return 1; }
+}
+check operator-src sh -c "git init -q '$W/op' && git -C '$W/op' fetch -q --depth 1 https://github.com/MicheleCampi/vllm-coldstart-operator.git 'refs/tags/$OPERATOR_TAG:refs/tags/$OPERATOR_TAG' && git -C '$W/op' checkout -q 'refs/tags/$OPERATOR_TAG'"
+check operator-tag-commit tag_is "$W/op" "$OPERATOR_TAG" "$OPERATOR_COMMIT"
 helm template argocd "$W/argo-cd-$ARGOCD_CHART_VERSION.tgz" 2>/dev/null | python3 "$W/served.py" applications.argoproj.io > "$W/crd-argo.yaml"
 helm template eso "$W/external-secrets-$ESO_CHART_VERSION.tgz" 2>/dev/null | python3 "$W/served.py" secretstores.external-secrets.io externalsecrets.external-secrets.io > "$W/crd-eso.yaml"
 python3 "$W/served.py" vllmservices.inference.michelecampi.dev < "$W/op/chart/crds/crd.yaml" > "$W/crd-op.yaml"
@@ -109,6 +116,7 @@ cp -r "$IAC/terraform" "$W/tf-nolabels" && sed -i '/^  resource_labels = var.res
 expect_reject neg-iac-misconfiguration "GCP-0051" "${TRIVY[@]}" --exit-code 1 --ignorefile .trivyignore "$W/tf-nolabels"
 mkdir -p "$W/leak" && printf 'token = "ghp_%s"\n' "$(head -c 300 /dev/urandom | tr -dc 'A-Za-z0-9' | head -c 36)" > "$W/leak/config.txt"
 expect_reject neg-secret "leaks found: 1" gitleaks dir --redact --no-banner "$W/leak"
+expect_reject neg-tag-not-pinned-commit "resolves to $OPERATOR_COMMIT, not the pinned" tag_is "$W/op" "$OPERATOR_TAG" 0000000000000000000000000000000000000000
 
 echo; if [ "$fail" = 0 ]; then echo "RESULT: all checks passed"; else echo "RESULT: failed"; fi
 exit "$fail"

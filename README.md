@@ -108,8 +108,9 @@ No cloud credentials, no Terraform state, no cluster. What it checks:
 - **Pinned inputs.** Each tool is downloaded at the version in
   [`ci/tools.lock`](ci/tools.lock) and rejected if its SHA-256 differs. The
   Helm charts are checked against their package hash, and the operator is
-  fetched at a fixed commit ([`ci/versions.env`](ci/versions.env)). These pins
-  must equal the versions the ArgoCD Applications deploy, or the run fails.
+  fetched at the tag ArgoCD deploys, which must resolve to a fixed commit
+  ([`ci/versions.env`](ci/versions.env)). The chart versions and the tag must
+  equal what the ArgoCD Applications deploy, or the run fails.
 - **Terraform**: `fmt -check`, `init -backend=false -lockfile=readonly`,
   `validate`.
 - **IaC misconfigurations**: trivy on the Terraform that git would commit,
@@ -129,12 +130,12 @@ No cloud credentials, no Terraform state, no cluster. What it checks:
   workflow.
 
 **Self-test.** A check that cannot fail proves nothing, so every run also
-feeds in six broken inputs and requires each to be rejected for the reason
+feeds in seven broken inputs and requires each to be rejected for the reason
 named: a number in `extraArgs`, an unknown field in a `VllmService`, a
 `SecretStore` at an API version the chart does not serve (`v1beta1`), an
-unformatted Terraform file, a cluster without resource labels, and a token in
-a file. If one is accepted, or
-rejected for another reason, the run fails.
+unformatted Terraform file, a cluster without resource labels, a token in a
+file, and a pinned operator commit the tag does not resolve to. If one is
+accepted, or rejected for another reason, the run fails.
 
 The validation workflow uses one action, `actions/checkout`, pinned by commit,
 with `contents: read` permissions.
