@@ -49,8 +49,10 @@ is in [docs/phase3-narrative.md](docs/phase3-narrative.md).
   the first zone with L4 capacity (`location_policy = "ANY"`), so a stockout
   in one zone does not block scale-up. A stockout in every zone does: on
   2026-10-24 all three L4 zones of europe-west4 were exhausted and the Pod
-  stayed Pending, which is why the cluster moved here. It carries
-  the taint `nvidia.com/gpu=present:NoSchedule`.
+  stayed Pending, which is why the cluster moved here. On a stockout in every
+  zone the pool now waits instead of failing: it uses flex-start provisioning
+  (on-demand price), and `max_run_duration = "14400s"` stops the GPU node
+  after 4 h. It carries the taint `nvidia.com/gpu=present:NoSchedule`.
   GKE runs the ExtendedResourceToleration admission controller, so a Pod that
   requests `nvidia.com/gpu` gets the toleration without declaring it
   ([GKE docs](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/gpus)).

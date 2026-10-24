@@ -110,3 +110,15 @@ variable "resource_labels" {
     managed-by  = "terraform"
   }
 }
+
+variable "gpu_flex_start" {
+  description = "Provision GPU nodes with flex-start: a scale-up without capacity waits instead of failing"
+  type        = bool
+  default     = true
+}
+
+variable "gpu_max_run_duration" {
+  description = "Lifetime of each GPU node, then GKE stops it (e.g. 14400s = 4 h, the session limit)"
+  type        = string
+  default     = "14400s"
+}

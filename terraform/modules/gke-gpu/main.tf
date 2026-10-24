@@ -91,6 +91,13 @@ resource "google_container_node_pool" "gpu" {
     image_type      = "COS_CONTAINERD"
     service_account = google_service_account.nodes.email
 
+    # Flex-start: when no zone has L4 capacity the scale-up waits in a queue
+    # instead of failing (all L4 zones of europe-west4 and europe-west1 were
+    # exhausted on 2026-10-24). Same price as on-demand. max_run_duration
+    # stops the GPU node after a fixed time, so a forgotten session ends.
+    flex_start       = var.gpu_flex_start
+    max_run_duration = var.gpu_max_run_duration
+
     guest_accelerator {
       type  = var.gpu_type
       count = var.gpu_count
