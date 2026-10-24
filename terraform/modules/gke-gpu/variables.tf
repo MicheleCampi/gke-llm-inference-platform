@@ -54,21 +54,21 @@ variable "gpu_driver_version" {
 }
 
 variable "min_gpu_nodes" {
-  description = "Minimum GPU nodes (0 = scale-to-zero)"
+  description = "Minimum GPU nodes across all zones (0 = scale-to-zero)"
   type        = number
   default     = 0
 }
 
 variable "max_gpu_nodes" {
-  description = "Maximum GPU nodes"
+  description = "Maximum GPU nodes across all zones"
   type        = number
   default     = 1
 }
 
 variable "gpu_node_locations" {
-  description = "Zones the GPU node pool is confined to"
+  description = "Zones the GPU node pool may use; the autoscaler picks one with capacity"
   type        = list(string)
-  default     = ["europe-west4-a"]
+  default     = ["europe-west4-a", "europe-west4-b", "europe-west4-c"]
 }
 
 # --- System node pool (CPU): runs ArgoCD, the operator and Alloy. ---

@@ -34,21 +34,21 @@ variable "gpu_machine_type" {
 }
 
 variable "min_gpu_nodes" {
-  description = "Minimum GPU nodes (0 = scale-to-zero)"
+  description = "Minimum GPU nodes across all zones (0 = scale-to-zero)"
   type        = number
   default     = 0
 }
 
 variable "max_gpu_nodes" {
-  description = "Maximum GPU nodes"
+  description = "Maximum GPU nodes across all zones"
   type        = number
   default     = 1
 }
 
 variable "gpu_node_locations" {
-  description = "GPU node pool zones"
+  description = "GPU node pool zones; the autoscaler picks one with capacity"
   type        = list(string)
-  default     = ["europe-west4-a"]
+  default     = ["europe-west4-a", "europe-west4-b", "europe-west4-c"]
 }
 
 variable "authorized_networks" {

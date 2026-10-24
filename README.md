@@ -44,8 +44,10 @@ is in [docs/phase3-narrative.md](docs/phase3-narrative.md).
   [`monitoring/grafana-secret.yaml`](monitoring/grafana-secret.yaml) holds
   references only; the credentials reach the cluster as a Secret that
   external-secrets creates at runtime.
-- **Scale-to-zero GPU pool.** `gpu-pool` runs 0 to 1 nodes in one zone
-  (`europe-west4-a`) and carries the taint `nvidia.com/gpu=present:NoSchedule`.
+- **Scale-to-zero GPU pool.** `gpu-pool` runs 0 to 1 nodes in total across
+  `europe-west4-a/b/c`: the autoscaler takes the first zone with L4
+  capacity (`location_policy = "ANY"`), so a stockout in one zone does not
+  block scale-up. It carries the taint `nvidia.com/gpu=present:NoSchedule`.
   GKE runs the ExtendedResourceToleration admission controller, so a Pod that
   requests `nvidia.com/gpu` gets the toleration without declaring it
   ([GKE docs](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/gpus)).

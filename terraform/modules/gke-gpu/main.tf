@@ -72,9 +72,13 @@ resource "google_container_node_pool" "gpu" {
   # Nodes start only after their service account holds its role.
   depends_on = [google_project_iam_member.nodes]
 
+  # Limits are for the whole pool, not per zone: at most max_gpu_nodes GPUs
+  # in total. ANY lets the autoscaler take the first zone with capacity, so a
+  # stockout in one zone does not block scale-up (seen 2026-10-24 in -a).
   autoscaling {
-    min_node_count = var.min_gpu_nodes
-    max_node_count = var.max_gpu_nodes
+    total_min_node_count = var.min_gpu_nodes
+    total_max_node_count = var.max_gpu_nodes
+    location_policy      = "ANY"
   }
 
   management {
