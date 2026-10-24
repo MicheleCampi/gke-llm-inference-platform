@@ -98,6 +98,12 @@ resource "google_container_node_pool" "gpu" {
     flex_start       = var.gpu_flex_start
     max_run_duration = var.gpu_max_run_duration
 
+    # Flex-start rejects reservations: without this block the API answered
+    # "Flex start node pools don't support reservations" (2026-10-24).
+    reservation_affinity {
+      consume_reservation_type = "NO_RESERVATION"
+    }
+
     guest_accelerator {
       type  = var.gpu_type
       count = var.gpu_count
