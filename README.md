@@ -32,7 +32,7 @@ is in [docs/phase3-narrative.md](docs/phase3-narrative.md).
         ├── argocd                    chart argo-cd 9.5.21        wave -1
         ├── external-secrets          chart 2.6.0                 wave -1
         ├── monitoring                SA, SecretStore, ExternalSecret  wave 0
-        ├── vllm-coldstart-operator   v0.2.1, qwen-7b on the L4   wave 0
+        ├── vllm-coldstart-operator   v0.6.0, qwen-7b on the L4   wave 0
         └── alloy                     chart 1.10.0 -> Grafana Cloud wave 1
 
 ## Design decisions
