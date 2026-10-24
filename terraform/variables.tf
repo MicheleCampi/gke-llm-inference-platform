@@ -4,9 +4,9 @@ variable "project_id" {
 }
 
 variable "region" {
-  description = "GCP region (e.g. europe-west4)"
+  description = "GCP region (e.g. europe-west1)"
   type        = string
-  default     = "europe-west4"
+  default     = "europe-west1"
 }
 
 variable "cluster_name" {
@@ -48,7 +48,7 @@ variable "max_gpu_nodes" {
 variable "gpu_node_locations" {
   description = "GPU node pool zones; the autoscaler picks one with capacity"
   type        = list(string)
-  default     = ["europe-west4-a", "europe-west4-b", "europe-west4-c"]
+  default     = ["europe-west1-b", "europe-west1-c"]
 }
 
 variable "authorized_networks" {

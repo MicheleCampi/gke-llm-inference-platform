@@ -45,9 +45,12 @@ is in [docs/phase3-narrative.md](docs/phase3-narrative.md).
   references only; the credentials reach the cluster as a Secret that
   external-secrets creates at runtime.
 - **Scale-to-zero GPU pool.** `gpu-pool` runs 0 to 1 nodes in total across
-  `europe-west4-a/b/c`: the autoscaler takes the first zone with L4
-  capacity (`location_policy = "ANY"`), so a stockout in one zone does not
-  block scale-up. It carries the taint `nvidia.com/gpu=present:NoSchedule`.
+  `europe-west1-b/c`, the two L4 zones of the region: the autoscaler takes
+  the first zone with L4 capacity (`location_policy = "ANY"`), so a stockout
+  in one zone does not block scale-up. A stockout in every zone does: on
+  2026-10-24 all three L4 zones of europe-west4 were exhausted and the Pod
+  stayed Pending, which is why the cluster moved here. It carries
+  the taint `nvidia.com/gpu=present:NoSchedule`.
   GKE runs the ExtendedResourceToleration admission controller, so a Pod that
   requests `nvidia.com/gpu` gets the toleration without declaring it
   ([GKE docs](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/gpus)).
@@ -203,7 +206,7 @@ account of `.github/workflows/plan.yml`.
     export TF_VAR_authorized_networks='[{cidr_block="YOUR_IP/32",display_name="operator"}]'
     cd terraform && terraform init && terraform apply && cd ..
     gcloud container clusters get-credentials capstone-inference \
-      --region europe-west4 --project PROJECT_ID
+      --region europe-west1 --project PROJECT_ID
 
     # Workload Identity: the Kubernetes SA monitoring/eso-grafana acts as the GCP SA
     gcloud iam service-accounts add-iam-policy-binding \
