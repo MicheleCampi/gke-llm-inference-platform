@@ -109,7 +109,7 @@ yq 'select(.kind=="VllmService") | .spec.gpuz = 1' "$W/op-render.yaml" > "$W/neg
 expect_reject neg-unknown-field "additional properties 'gpuz' not allowed" "${KC[@]}" "$W/neg-unknown.yaml"
 yq '(select(.kind=="SecretStore") | .apiVersion) = "external-secrets.io/v1beta1"' monitoring/grafana-secret.yaml > "$W/neg-v1beta1.yaml"
 expect_reject neg-unserved-api-version "could not find schema for SecretStore" "${KC[@]}" "$W/neg-v1beta1.yaml"
-cp -r terraform "$W/tf" && sed -i 's/^  default     = "europe-west1"$/  default = "europe-west1"/' "$W/tf/variables.tf"
+cp -r terraform "$W/tf" && sed -i 's/^  default     = "us-central1"$/  default = "us-central1"/' "$W/tf/variables.tf"
 expect_reject neg-terraform-format "variables.tf" terraform -chdir="$W/tf" fmt -check -recursive
 cp -r "$IAC/terraform" "$W/tf-nolabels" && sed -i '/^  resource_labels = var.resource_labels$/d' "$W/tf-nolabels/modules/gke-gpu/main.tf"
 expect_reject neg-iac-misconfiguration "GCP-0051" "${TRIVY[@]}" --exit-code 1 --ignorefile .trivyignore "$W/tf-nolabels"

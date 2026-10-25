@@ -4,7 +4,7 @@ variable "project_id" {
 }
 
 variable "region" {
-  description = "GCP region for the regional cluster (e.g. europe-west1)"
+  description = "GCP region for the regional cluster (e.g. us-central1)"
   type        = string
 }
 
@@ -68,7 +68,7 @@ variable "max_gpu_nodes" {
 variable "gpu_node_locations" {
   description = "Zones the GPU node pool may use; the autoscaler picks one with capacity"
   type        = list(string)
-  default     = ["europe-west1-b", "europe-west1-c"]
+  default     = ["us-central1-a", "us-central1-b", "us-central1-c"]
 }
 
 # --- System node pool (CPU): runs ArgoCD, the operator and Alloy. ---
@@ -90,7 +90,7 @@ variable "system_max_nodes" {
 variable "system_node_locations" {
   description = "System-pool zones. One zone = 1 node (no HA, lowest cost)"
   type        = list(string)
-  default     = ["europe-west1-b"]
+  default     = ["us-central1-a"]
 }
 
 variable "authorized_networks" {
