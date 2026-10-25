@@ -71,6 +71,61 @@ spec:
                 forward_to = [prometheus.remote_write.grafana_cloud.receiver]
               }
 
+              // The vLLM pods the operator runs. Every pod of a VllmService,
+              // fleet children included, carries managed-by (operator
+              // src/main.rs, build_deployment) and serves /metrics on its port
+              // "http" (8000). Only up and the vLLM series of the SLO and of
+              // capacity are kept, so the free plan's series stay bounded.
+              discovery.kubernetes "vllm" {
+                role = "pod"
+                namespaces {
+                  names = ["vllm-system"]
+                }
+                selectors {
+                  role = "pod"
+                  label = "app.kubernetes.io/managed-by=vllm-coldstart-operator"
+                }
+              }
+
+              discovery.relabel "vllm" {
+                targets = discovery.kubernetes.vllm.targets
+                rule {
+                  source_labels = ["__meta_kubernetes_pod_container_port_name"]
+                  regex = "http"
+                  action = "keep"
+                }
+                rule {
+                  source_labels = ["__meta_kubernetes_namespace"]
+                  target_label = "namespace"
+                }
+                rule {
+                  source_labels = ["__meta_kubernetes_pod_name"]
+                  target_label = "pod"
+                }
+                rule {
+                  source_labels = ["__meta_kubernetes_pod_label_app"]
+                  target_label = "service"
+                }
+                rule {
+                  source_labels = ["__meta_kubernetes_pod_label_inference_michelecampi_dev_fleet"]
+                  target_label = "fleet"
+                }
+              }
+
+              prometheus.scrape "vllm" {
+                targets = discovery.relabel.vllm.output
+                forward_to = [prometheus.relabel.vllm.receiver]
+              }
+
+              prometheus.relabel "vllm" {
+                forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+                rule {
+                  source_labels = ["__name__"]
+                  regex = "up|vllm:(time_to_first_token_seconds|inter_token_latency_seconds|request_success_total|num_requests_running|num_requests_waiting).*"
+                  action = "keep"
+                }
+              }
+
               prometheus.remote_write "grafana_cloud" {
                 endpoint {
                   url = sys.env("GC_PROM_URL")

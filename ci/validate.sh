@@ -95,6 +95,11 @@ check operator-render sh -c "helm template vllm-coldstart-operator '$W/op/chart'
 check operator-values "${KC[@]}" "$W/op-render.yaml"
 grep -h Summary "$W/operator-values.log" | sed 's/^/  /'
 
+echo "== alloy configuration, validated by the alloy that runs it"
+yq '.spec.source.helm.values' argocd/apps/alloy.yaml | yq '.alloy.configMap.content' > "$W/alloy.alloy"
+ALLOY=(docker run --rm -v "$W:/c:ro" "$ALLOY_IMAGE" validate)
+check alloy-config "${ALLOY[@]}" /c/alloy.alloy
+
 echo "== secrets in the full history"
 check gitleaks gitleaks git --redact --no-banner .
 
@@ -116,6 +121,9 @@ expect_reject neg-iac-misconfiguration "GCP-0051" "${TRIVY[@]}" --exit-code 1 --
 mkdir -p "$W/leak" && printf 'token = "ghp_%s"\n' "$(head -c 300 /dev/urandom | tr -dc 'A-Za-z0-9' | head -c 36)" > "$W/leak/config.txt"
 expect_reject neg-secret "leaks found: 1" gitleaks dir --redact --no-banner "$W/leak"
 expect_reject neg-tag-not-pinned-commit "resolves to $OPERATOR_COMMIT, not the pinned" tag_is "$W/op" "$OPERATOR_TAG" 0000000000000000000000000000000000000000
+
+sed 's/prometheus.scrape "vllm"/prometheus.scrapez "vllm"/' "$W/alloy.alloy" > "$W/neg-alloy.alloy"
+expect_reject neg-alloy-component "validation failed" "${ALLOY[@]}" /c/neg-alloy.alloy
 
 echo; if [ "$fail" = 0 ]; then echo "RESULT: all checks passed"; else echo "RESULT: failed"; fi
 exit "$fail"
