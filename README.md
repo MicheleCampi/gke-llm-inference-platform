@@ -123,7 +123,8 @@ No cloud credentials, no Terraform state, no cluster. What it checks:
   ([`ci/versions.env`](ci/versions.env)). The chart versions and the tag must
   equal what the ArgoCD Applications deploy, or the run fails.
 - **Terraform**: `fmt -check`, `init -backend=false -lockfile=readonly`,
-  `validate`.
+  `validate`, and a check that the cluster module declares GKE's managed
+  collection for Prometheus off.
 - **IaC misconfigurations**: trivy on the Terraform that git would commit,
   with its checks pinned by OCI digest. Accepted findings are listed in
   [`.trivyignore`](.trivyignore), each with a reason and an expiry date, and
@@ -245,6 +246,12 @@ account of `.github/workflows/plan.yml`.
   root applied by hand.
 - Alloy ships the operator's metrics to Grafana Cloud; there are no alerting
   rules or dashboards in this repository.
+- GKE's managed collection for Prometheus is declared off, since Alloy is the
+  only metrics pipeline: nothing here turned it on, yet in the run of
+  2026-10-27 its collectors ran on both nodes, and that run was billed for
+  Prometheus samples ingested. The change passes
+  `terraform validate`, trivy and the CI self-test, but has not been applied
+  to a live cluster yet.
 - The hardening of 2026-10-03 (node service account, control-plane authorized
   networks, explicit `disable-legacy-endpoints`, flow logs, labels) passes
   `terraform validate`, trivy and the CI self-test, but has not been applied

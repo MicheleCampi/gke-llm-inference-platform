@@ -32,10 +32,16 @@ same pin-argocd-chart   "$(yq '.spec.sources[0].targetRevision' argocd/apps/argo
 same pin-eso-chart      "$(yq '.spec.source.targetRevision' argocd/apps/external-secrets.yaml)"   "$ESO_CHART_VERSION"
 same pin-operator       "$(yq '.spec.source.targetRevision' argocd/apps/operator.yaml)"           "$OPERATOR_TAG"
 
+gmp_off() { # main.tf -> fails unless monitoring_config declares managed_prometheus off
+  awk '/^  monitoring_config \{$/{m=1} m && /^    managed_prometheus \{$/{p=1} p && /^      enabled = false$/{ok=1} /^  \}$/{m=0; p=0} END{exit !ok}' "$1" \
+    || { echo "managed_prometheus is not declared off in $1"; return 1; }
+}
+
 echo "== terraform"
 check tf-fmt      sh -c "terraform -chdir=terraform fmt -check -recursive -diff && terraform -chdir=bootstrap fmt -check -recursive -diff"
 check tf-init     terraform -chdir=terraform init -backend=false -lockfile=readonly -input=false -no-color
 check tf-validate terraform -chdir=terraform validate -no-color
+check tf-managed-prometheus-off gmp_off terraform/modules/gke-gpu/main.tf
 check bootstrap-init     terraform -chdir=bootstrap/ci-identity init -backend=false -lockfile=readonly -input=false -no-color
 check bootstrap-validate terraform -chdir=bootstrap/ci-identity validate -no-color
 
@@ -124,6 +130,8 @@ expect_reject neg-tag-not-pinned-commit "resolves to $OPERATOR_COMMIT, not the p
 
 sed 's/prometheus.scrape "vllm"/prometheus.scrapez "vllm"/' "$W/alloy.alloy" > "$W/neg-alloy.alloy"
 expect_reject neg-alloy-component "validation failed" "${ALLOY[@]}" /c/neg-alloy.alloy
+sed 's/^      enabled = false$/      enabled = true/' terraform/modules/gke-gpu/main.tf > "$W/neg-gmp-main.tf"
+expect_reject neg-managed-prometheus-on "managed_prometheus is not declared off" gmp_off "$W/neg-gmp-main.tf"
 
 echo; if [ "$fail" = 0 ]; then echo "RESULT: all checks passed"; else echo "RESULT: failed"; fi
 exit "$fail"

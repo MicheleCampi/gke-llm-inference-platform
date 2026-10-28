@@ -25,6 +25,16 @@ resource "google_container_cluster" "this" {
     channel = var.release_channel
   }
 
+  # Off on purpose: Alloy is the platform's only metrics pipeline, remote
+  # writing to Grafana Cloud. Nothing here turned managed collection on, yet
+  # on 2026-10-27 its collectors ran on both nodes, and that run was billed
+  # for Prometheus samples ingested, which nothing here reads.
+  monitoring_config {
+    managed_prometheus {
+      enabled = false
+    }
+  }
+
   # Off on purpose: the lab is destroyed after each session, and with
   # deletion protection on, terraform destroy cannot delete the cluster.
   deletion_protection = false
