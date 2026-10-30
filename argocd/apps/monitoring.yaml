@@ -8,7 +8,7 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: default
+  project: workloads
   source:
     repoURL: git@github.com:MicheleCampi/gke-llm-inference-platform.git
     targetRevision: main
