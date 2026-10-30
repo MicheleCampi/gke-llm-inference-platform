@@ -1,0 +1,57 @@
+# Threat model E3. Kinds derived from rendered manifests (operator chart v0.6.0, alloy 1.10.0, monitoring/).
+# platform is cluster-admin by construction (Argo CD manages itself). root-app stays in default (bootstrap).
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  description: Argo CD self-management and external-secrets
+  sourceRepos:
+  - git@github.com:MicheleCampi/gke-llm-inference-platform.git
+  - https://argoproj.github.io/argo-helm
+  - https://charts.external-secrets.io
+  destinations:
+  - server: https://kubernetes.default.svc
+    namespace: argocd
+  - server: https://kubernetes.default.svc
+    namespace: external-secrets
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  namespaceResourceWhitelist:
+  - group: '*'
+    kind: '*'
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: workloads
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  description: 'Operator and observability: 3 repos, 2 namespaces, 4 cluster kinds'
+  sourceRepos:
+  - git@github.com:MicheleCampi/gke-llm-inference-platform.git
+  - https://github.com/MicheleCampi/vllm-coldstart-operator.git
+  - https://grafana.github.io/helm-charts
+  destinations:
+  - server: https://kubernetes.default.svc
+    namespace: monitoring
+  - server: https://kubernetes.default.svc
+    namespace: vllm-system
+  clusterResourceWhitelist:
+  - group: ''
+    kind: Namespace
+  - group: rbac.authorization.k8s.io
+    kind: ClusterRole
+  - group: rbac.authorization.k8s.io
+    kind: ClusterRoleBinding
+  - group: apiextensions.k8s.io
+    kind: CustomResourceDefinition
+  namespaceResourceWhitelist:
+  - group: '*'
+    kind: '*'
