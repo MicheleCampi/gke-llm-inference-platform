@@ -80,7 +80,7 @@ check chart-eso    pull external-secrets https://charts.external-secrets.io "$ES
 # resolve to the pinned commit: a moved or re-pointed tag fails the run.
 check operator-src sh -c "git init -q '$W/op' && git -C '$W/op' fetch -q --depth 1 https://github.com/MicheleCampi/vllm-coldstart-operator.git 'refs/tags/$OPERATOR_TAG:refs/tags/$OPERATOR_TAG' && git -C '$W/op' checkout -q 'refs/tags/$OPERATOR_TAG'"
 check operator-tag-commit tag_is "$W/op" "$OPERATOR_TAG" "$OPERATOR_COMMIT"
-helm template argocd "$W/argo-cd-$ARGOCD_CHART_VERSION.tgz" 2>/dev/null | python3 "$W/served.py" applications.argoproj.io > "$W/crd-argo.yaml"
+helm template argocd "$W/argo-cd-$ARGOCD_CHART_VERSION.tgz" 2>/dev/null | python3 "$W/served.py" applications.argoproj.io appprojects.argoproj.io > "$W/crd-argo.yaml"
 helm template eso "$W/external-secrets-$ESO_CHART_VERSION.tgz" 2>/dev/null | python3 "$W/served.py" secretstores.external-secrets.io externalsecrets.external-secrets.io > "$W/crd-eso.yaml"
 python3 "$W/served.py" vllmservices.inference.michelecampi.dev < "$W/op/chart/crds/crd.yaml" > "$W/crd-op.yaml"
 for g in argoproj.io:argo external-secrets.io:eso inference.michelecampi.dev:op; do
