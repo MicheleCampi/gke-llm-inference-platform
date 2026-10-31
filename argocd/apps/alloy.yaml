@@ -71,16 +71,13 @@ spec:
                 forward_to = [prometheus.remote_write.grafana_cloud.receiver]
               }
 
-              // The vLLM pods the operator runs. Every pod of a VllmService,
+              // The vLLM pods the operator runs, in any namespace (team-* included). Every pod of a VllmService,
               // fleet children included, carries managed-by (operator
               // src/main.rs, build_deployment) and serves /metrics on its port
               // "http" (8000). Only up and the vLLM series of the SLO and of
               // capacity are kept, so the free plan's series stay bounded.
               discovery.kubernetes "vllm" {
                 role = "pod"
-                namespaces {
-                  names = ["vllm-system"]
-                }
                 selectors {
                   role = "pod"
                   label = "app.kubernetes.io/managed-by=vllm-coldstart-operator"

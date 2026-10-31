@@ -59,6 +59,11 @@ for f in files:
                        for l in d["spec"].get("limits", []) if l.get("type") == "Container")
                for d in ten):
         errs.append(f"{t}: tenants/{t} has no LimitRange with CPU/memory defaults for containers")
+    # Default-deny ingress: every pod selected, Ingress in policyTypes.
+    if not any(d["kind"] == "NetworkPolicy" and d["metadata"].get("namespace") == ns
+               and d["spec"].get("podSelector") == {} and "Ingress" in d["spec"].get("policyTypes", [])
+               for d in ten):
+        errs.append(f"{t}: tenants/{t} has no default-deny ingress NetworkPolicy")
     for g in sorted(glob.glob(os.path.join(root, "teams", t, "*.yaml"))):
         for d in docs(g):
             if d["metadata"].get("namespace", ns) != ns:

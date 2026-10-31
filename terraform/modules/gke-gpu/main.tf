@@ -39,6 +39,9 @@ resource "google_container_cluster" "this" {
   # deletion protection on, terraform destroy cannot delete the cluster.
   deletion_protection = false
 
+  # Dataplane V2: without it GKE does not enforce NetworkPolicy (tenancy).
+  datapath_provider = "ADVANCED_DATAPATH"
+
   resource_labels = var.resource_labels
 
   # The control plane accepts connections only from the cluster's nodes and
