@@ -134,6 +134,11 @@ yq -i '(select(.kind=="AppProject") | .spec.namespaceResourceWhitelist) += [{"gr
 expect_reject neg-team-may-edit-quota "team project may manage ResourceQuota" python3 ci/check-tenancy.py "$W/neg-ten1"
 yq -i '.metadata.namespace = "vllm-system"' "$W/neg-ten2/teams/demo/qwen-7b.yaml"
 expect_reject neg-team-other-namespace "targets namespace vllm-system" python3 ci/check-tenancy.py "$W/neg-ten2"
+mkdir -p "$W/neg-ten3" "$W/neg-ten4" && cp -r argocd tenants teams "$W/neg-ten3/" && cp -r argocd tenants teams "$W/neg-ten4/"
+rm "$W/neg-ten3/tenants/demo/limitrange.yaml"
+expect_reject neg-team-no-limitrange "has no LimitRange with CPU/memory defaults" python3 ci/check-tenancy.py "$W/neg-ten3"
+yq -i 'del(.spec.hard["requests.cpu"])' "$W/neg-ten4/tenants/demo/quota.yaml"
+expect_reject neg-quota-no-cpu "quota does not cap CPU and memory" python3 ci/check-tenancy.py "$W/neg-ten4"
 expect_reject neg-tag-not-pinned-commit "resolves to $OPERATOR_COMMIT, not the pinned" tag_is "$W/op" "$OPERATOR_TAG" 0000000000000000000000000000000000000000
 
 sed 's/prometheus.scrape "vllm"/prometheus.scrapez "vllm"/' "$W/alloy.alloy" > "$W/neg-alloy.alloy"

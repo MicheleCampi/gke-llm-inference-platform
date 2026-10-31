@@ -48,6 +48,17 @@ for f in files:
     if not any(d["kind"] == "ResourceQuota" and d["metadata"].get("namespace") == ns
                and "requests.nvidia.com/gpu" in d["spec"].get("hard", {}) for d in ten):
         errs.append(f"{t}: tenants/{t} has no GPU quota")
+    # The operator sets only the GPU limit, so CPU/memory are capped by quota and
+    # filled in by LimitRange defaults; without the defaults every pod is rejected.
+    if not any(d["kind"] == "ResourceQuota" and d["metadata"].get("namespace") == ns
+               and {"requests.cpu", "requests.memory"} <= set(d["spec"].get("hard", {})) for d in ten):
+        errs.append(f"{t}: tenants/{t} quota does not cap CPU and memory")
+    if not any(d["kind"] == "LimitRange" and d["metadata"].get("namespace") == ns
+               and any({"cpu", "memory"} <= set(l.get("defaultRequest", {}))
+                       and {"cpu", "memory"} <= set(l.get("default", {}))
+                       for l in d["spec"].get("limits", []) if l.get("type") == "Container")
+               for d in ten):
+        errs.append(f"{t}: tenants/{t} has no LimitRange with CPU/memory defaults for containers")
     for g in sorted(glob.glob(os.path.join(root, "teams", t, "*.yaml"))):
         for d in docs(g):
             if d["metadata"].get("namespace", ns) != ns:
