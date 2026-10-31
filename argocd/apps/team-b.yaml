@@ -1,0 +1,68 @@
+# One file per team. The team can deliver only VllmService and FleetService,
+# only into team-b, only from this repository; the platform owns its
+# namespace and GPU quota (tenants/b). ci/check-tenancy.py enforces this.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: team-b
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  description: 'Team b: inference workloads in team-b only'
+  sourceRepos:
+  - git@github.com:MicheleCampi/gke-llm-inference-platform.git
+  destinations:
+  - server: https://kubernetes.default.svc
+    namespace: team-b
+  namespaceResourceWhitelist:
+  - group: inference.michelecampi.dev
+    kind: VllmService
+  - group: inference.michelecampi.dev
+    kind: FleetService
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: tenant-b
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: '0'
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: tenancy
+  source:
+    repoURL: git@github.com:MicheleCampi/gke-llm-inference-platform.git
+    targetRevision: v0.5.0
+    path: tenants/b
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: team-b
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: team-b
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: '1'
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: team-b
+  source:
+    repoURL: git@github.com:MicheleCampi/gke-llm-inference-platform.git
+    targetRevision: v0.5.0
+    path: teams/b
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: team-b
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
