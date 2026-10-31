@@ -259,9 +259,8 @@ account of `.github/workflows/plan.yml`.
 - The plan job has run only against an empty state, with the cluster destroyed:
   its read-only roles have not yet been exercised by a refresh of live
   resources.
-- Two trivy findings are accepted until the next live run, both in
-  [`.trivyignore`](.trivyignore): no NetworkPolicy enforcement (GCP-0056),
-  since enforcement without written policies changes no traffic, and nodes
+- One trivy finding is accepted until the next live run, in
+  [`.trivyignore`](.trivyignore): nodes
   that are not private (GCP-0059), since private nodes need Cloud NAT to pull
   the vLLM image and the model weights.
 
