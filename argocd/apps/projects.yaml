@@ -55,3 +55,25 @@ spec:
   namespaceResourceWhitelist:
   - group: '*'
     kind: '*'
+---
+# Tenancy: the platform, not the team, owns each team's namespace and quota.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: tenancy
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  description: 'Team namespaces and quotas, owned by the platform'
+  sourceRepos:
+  - git@github.com:MicheleCampi/gke-llm-inference-platform.git
+  destinations:
+  - server: https://kubernetes.default.svc
+    namespace: 'team-*'
+  clusterResourceWhitelist:
+  - group: ''
+    kind: Namespace
+  namespaceResourceWhitelist:
+  - group: ''
+    kind: ResourceQuota

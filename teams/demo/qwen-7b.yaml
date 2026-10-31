@@ -1,0 +1,13 @@
+# What the team owns: the service it wants served. Same fields as the
+# operator's deploy/examples/qwen-7b.yaml.
+apiVersion: inference.michelecampi.dev/v1alpha1
+kind: VllmService
+metadata:
+  name: qwen-7b
+  namespace: team-demo
+spec:
+  model: "Qwen/Qwen2.5-7B-Instruct"
+  replicas: 1
+  warmupStrategy: Eager
+  image: "vllm/vllm-openai:latest"
+  gpu: 1

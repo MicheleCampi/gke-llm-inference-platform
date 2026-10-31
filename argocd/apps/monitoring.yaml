@@ -11,7 +11,7 @@ spec:
   project: workloads
   source:
     repoURL: git@github.com:MicheleCampi/gke-llm-inference-platform.git
-    targetRevision: v0.1.0
+    targetRevision: v0.2.0
     path: monitoring
   destination:
     server: https://kubernetes.default.svc

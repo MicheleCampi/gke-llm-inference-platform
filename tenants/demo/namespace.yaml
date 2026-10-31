@@ -1,0 +1,10 @@
+# Pod Security: warn and audit at restricted, not enforced yet. Baseline would
+# reject hostPath, which the operator's modelCacheHostPath can use.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-demo
+  labels:
+    platform.michelecampi.dev/team: demo
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/audit: restricted
