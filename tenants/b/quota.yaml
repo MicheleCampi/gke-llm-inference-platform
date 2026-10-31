@@ -1,0 +1,17 @@
+# The GPU is what costs: one L4 at most for this team. CPU and memory are
+# capped too, sized for 2 vLLM pods at the LimitRange defaults (limitrange.yaml):
+# the operator sets only the GPU limit, so the defaults keep pods admissible.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: team-b
+  namespace: team-b
+spec:
+  hard:
+    requests.nvidia.com/gpu: '1'
+    requests.cpu: "4"
+    requests.memory: 24Gi
+    limits.cpu: "8"
+    limits.memory: 32Gi
+    pods: '10'
+    count/vllmservices.inference.michelecampi.dev: '2'
