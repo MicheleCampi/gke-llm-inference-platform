@@ -92,8 +92,11 @@ KC=(kubeconform -strict -summary -kubernetes-version "$K8S_SCHEMA_VERSION"
     -schema-location "$W/schemas/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json")
 
 echo "== manifests"
-check manifests "${KC[@]}" argocd/root-app.yaml argocd/apps/*.yaml monitoring/*.yaml
+check manifests "${KC[@]}" argocd/root-app.yaml argocd/apps/*.yaml monitoring/*.yaml tenants/*/*.yaml teams/*/*.yaml
 grep -h Summary "$W/manifests.log" | sed 's/^/  /'
+
+echo "== tenancy: each team is confined to its namespace and has a GPU quota"
+check tenancy python3 ci/check-tenancy.py .
 
 echo "== operator values, rendered with the operator chart"
 yq '.spec.source.helm.values' argocd/apps/operator.yaml > "$W/op-values.yaml"
@@ -126,6 +129,11 @@ cp -r "$IAC/terraform" "$W/tf-nolabels" && sed -i '/^  resource_labels = var.res
 expect_reject neg-iac-misconfiguration "GCP-0051" "${TRIVY[@]}" --exit-code 1 --ignorefile .trivyignore "$W/tf-nolabels"
 mkdir -p "$W/leak" && printf 'token = "ghp_%s"\n' "$(head -c 300 /dev/urandom | tr -dc 'A-Za-z0-9' | head -c 36)" > "$W/leak/config.txt"
 expect_reject neg-secret "leaks found: 1" gitleaks dir --redact --no-banner "$W/leak"
+mkdir -p "$W/neg-ten1" "$W/neg-ten2" && cp -r argocd tenants teams "$W/neg-ten1/" && cp -r argocd tenants teams "$W/neg-ten2/"
+yq -i '(select(.kind=="AppProject") | .spec.namespaceResourceWhitelist) += [{"group": "", "kind": "ResourceQuota"}]' "$W/neg-ten1/argocd/apps/team-demo.yaml"
+expect_reject neg-team-may-edit-quota "team project may manage ResourceQuota" python3 ci/check-tenancy.py "$W/neg-ten1"
+yq -i '.metadata.namespace = "vllm-system"' "$W/neg-ten2/teams/demo/qwen-7b.yaml"
+expect_reject neg-team-other-namespace "targets namespace vllm-system" python3 ci/check-tenancy.py "$W/neg-ten2"
 expect_reject neg-tag-not-pinned-commit "resolves to $OPERATOR_COMMIT, not the pinned" tag_is "$W/op" "$OPERATOR_TAG" 0000000000000000000000000000000000000000
 
 sed 's/prometheus.scrape "vllm"/prometheus.scrapez "vllm"/' "$W/alloy.alloy" > "$W/neg-alloy.alloy"
