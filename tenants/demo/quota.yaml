@@ -1,6 +1,6 @@
-# The GPU is what costs: one L4 at most for this team. CPU and memory quotas
-# would reject every pod that does not declare them; they come with
-# LimitRange defaults sized for vLLM, a stated next step.
+# The GPU is what costs: one L4 at most for this team. CPU and memory are
+# capped too, sized for 2 vLLM pods at the LimitRange defaults (limitrange.yaml):
+# the operator sets only the GPU limit, so the defaults keep pods admissible.
 apiVersion: v1
 kind: ResourceQuota
 metadata:
@@ -9,5 +9,9 @@ metadata:
 spec:
   hard:
     requests.nvidia.com/gpu: '1'
+    requests.cpu: "4"
+    requests.memory: 24Gi
+    limits.cpu: "8"
+    limits.memory: 32Gi
     pods: '10'
     count/vllmservices.inference.michelecampi.dev: '2'
