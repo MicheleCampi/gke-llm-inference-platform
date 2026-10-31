@@ -11,7 +11,7 @@ spec:
   project: workloads
   source:
     repoURL: https://github.com/MicheleCampi/vllm-coldstart-operator.git
-    targetRevision: v0.7.0
+    targetRevision: v0.8.0
     path: chart
     helm:
       releaseName: vllm-coldstart-operator
@@ -43,7 +43,7 @@ spec:
     namespace: vllm-system
   # On each of the chart's three CRDs the API server drops names.categories,
   # which the chart declares as an empty array, and adds names.listKind,
-  # which the chart leaves out. Measured on kind with v0.7.0 and ArgoCD
+  # which the chart leaves out. Measured on kind with v0.8.0 and ArgoCD
   # 9.5.21: with no ignores the three CRDs stay OutOfSync and nothing else
   # does; with these two paths ignored every resource is Synced.
   # additionalPrinterColumns is no longer empty and is not ignored.

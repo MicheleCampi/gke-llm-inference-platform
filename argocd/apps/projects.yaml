@@ -1,4 +1,4 @@
-# Threat model E3. Kinds derived from rendered manifests (operator chart v0.7.0, alloy 1.10.0, monitoring/).
+# Threat model E3. Kinds derived from rendered manifests (operator chart v0.8.0, alloy 1.10.0, monitoring/).
 # platform is cluster-admin by construction (Argo CD manages itself). root-app stays in default (bootstrap).
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
