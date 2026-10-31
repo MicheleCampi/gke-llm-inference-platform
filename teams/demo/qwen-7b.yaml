@@ -11,3 +11,9 @@ spec:
   warmupStrategy: Eager
   image: "vllm/vllm-openai:latest"
   gpu: 1
+  objective:
+    # Declared by the team. Same as the platform default (ADR-0013), stated explicitly. Budget is the team declaration, compared with measured cost (ADR-0025).
+    ttftSeconds: 1.0
+    percentile: 95
+  budget:
+    eurPerMonth: 500
