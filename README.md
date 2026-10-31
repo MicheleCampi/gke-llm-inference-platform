@@ -34,6 +34,19 @@ is in [docs/phase3-narrative.md](docs/phase3-narrative.md).
         ├── monitoring                SA, SecretStore, ExternalSecret  wave 0
         ├── vllm-coldstart-operator   v0.8.0, qwen-7b on the L4   wave 0
         └── alloy                     chart 1.10.0 -> Grafana Cloud wave 1
+      tenants/<team>/  namespace, GPU ResourceQuota, LimitRange, deny-all NetworkPolicy
+
+## Teams
+
+Each team gets a namespace `team-<name>` from `tenants/<name>/`: a GPU
+ResourceQuota, a LimitRange, and a default-deny ingress NetworkPolicy that
+admits only its own namespace, plus `monitoring` and `vllm-system` on TCP 8000.
+GKE enforces it through Dataplane V2 (`ADVANCED_DATAPATH`). A team's workloads
+live in `teams/<name>/`, delivered by its own Argo CD Application.
+
+Onboarding is one command and one pull request:
+`python3 ci/new-team.py <name> [--gpu N]`. CI runs `ci/check-tenancy.py`,
+which fails if a team lacks its quota, its LimitRange or the deny-all policy.
 
 ## Design decisions
 
@@ -259,6 +272,10 @@ account of `.github/workflows/plan.yml`.
 - The plan job has run only against an empty state, with the cluster destroyed:
   its read-only roles have not yet been exercised by a refresh of live
   resources.
+- Tenancy (namespaces, quotas, NetworkPolicy, Dataplane V2) passes
+  `terraform validate`, trivy and the CI self-test, but has not been applied
+  to a live cluster yet. There is no identity per team: RBAC per team needs
+  Google Groups for RBAC.
 - One trivy finding is accepted until the next live run, in
   [`.trivyignore`](.trivyignore): nodes
   that are not private (GCP-0059), since private nodes need Cloud NAT to pull
