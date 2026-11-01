@@ -6,3 +6,13 @@
 # weights from the internet; private nodes need Cloud NAT, to be added and
 # tested with the next live run (README, Limits).
 GCP-0059 exp:2027-03-31
+
+# GCP-0011, project-wide service-account roles for the apply identity
+# (bootstrap/ci-identity/apply.tf). terraform/ creates service accounts and
+# binds them, so the apply identity holds serviceAccountUser and, the same
+# risk in practice, serviceAccountAdmin on the project: it could act as any
+# service account in it. Mitigated by a keyless identity usable only from the
+# terraform-apply environment (required reviewer, main only). Fix: create with
+# serviceAccountCreator, grant user/admin only on the accounts terraform/
+# creates; proved by the first apply from CI.
+GCP-0011 exp:2027-03-31
