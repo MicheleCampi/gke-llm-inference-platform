@@ -232,6 +232,8 @@ account of `.github/workflows/plan.yml`.
     kubectl apply -f argocd/root-app.yaml      # the only manual apply
     cd terraform && terraform destroy          # stop the meter
 
+See [docs/upgrade-and-dr.md](docs/upgrade-and-dr.md) for upgrades and disaster recovery.
+
 ## Limits
 
 - `monitoring` was OutOfSync while Healthy in the run: the Secret that
