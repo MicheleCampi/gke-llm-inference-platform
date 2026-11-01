@@ -204,12 +204,8 @@ account of `.github/workflows/plan.yml`.
     printf '%s' '{"url":"...","user":"...","token":"..."}' | \
       gcloud secrets versions add grafana-cloud-remote-write --data-file=-
 
-    # The GCP service account external-secrets runs as
-    gcloud iam service-accounts create eso-grafana-reader \
-      --display-name="ESO reader for Grafana Cloud secret"
-    gcloud secrets add-iam-policy-binding grafana-cloud-remote-write \
-      --member="serviceAccount:eso-grafana-reader@PROJECT_ID.iam.gserviceaccount.com" \
-      --role="roles/secretmanager.secretAccessor"
+    # The GCP service account external-secrets runs as, its access to this secret
+    # and its Workload Identity binding: terraform/eso-identity.tf (terraform apply)
 
     # CI identity for the plan workflow (set the IDs in its terraform.tfvars)
     cd bootstrap/ci-identity && terraform init && terraform apply && cd ../..
@@ -224,12 +220,6 @@ account of `.github/workflows/plan.yml`.
     cd terraform && terraform init && terraform apply && cd ..
     gcloud container clusters get-credentials capstone-inference \
       --region us-central1 --project PROJECT_ID
-
-    # Workload Identity: the Kubernetes SA monitoring/eso-grafana acts as the GCP SA
-    gcloud iam service-accounts add-iam-policy-binding \
-      eso-grafana-reader@PROJECT_ID.iam.gserviceaccount.com \
-      --role="roles/iam.workloadIdentityUser" \
-      --member="serviceAccount:PROJECT_ID.svc.id.goog[monitoring/eso-grafana]"
 
     # ArgoCD, once; from here on it manages itself
     helm repo add argo https://argoproj.github.io/argo-helm && helm repo update argo
