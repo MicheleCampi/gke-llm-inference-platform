@@ -1,6 +1,6 @@
 # External Secrets reads the Grafana Cloud secret as this GCP service account,
-# through Workload Identity. Created by hand at first (README); adopted here
-# with import blocks, so the plan must show imports and no changes.
+# through Workload Identity. Created by hand at first, imported into state on
+# 1/11/2026; from here on Terraform owns them.
 # The secret and its value stay outside Terraform: a value here would land in state.
 
 locals {
@@ -29,19 +29,4 @@ resource "google_service_account_iam_member" "eso_workload_identity" {
 
   # the workload pool PROJECT.svc.id.goog exists only once the cluster does
   depends_on = [module.gke_gpu]
-}
-
-import {
-  to = google_service_account.eso_grafana_reader
-  id = "projects/${var.project_id}/serviceAccounts/${local.eso_sa_email}"
-}
-
-import {
-  to = google_secret_manager_secret_iam_member.eso_reads_grafana
-  id = "${local.grafana_sec} roles/secretmanager.secretAccessor serviceAccount:${local.eso_sa_email}"
-}
-
-import {
-  to = google_service_account_iam_member.eso_workload_identity
-  id = "projects/${var.project_id}/serviceAccounts/${local.eso_sa_email} roles/iam.workloadIdentityUser ${local.eso_ksa}"
 }
