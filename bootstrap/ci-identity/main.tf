@@ -41,7 +41,7 @@ resource "google_iam_workload_identity_pool_provider" "repo" {
   attribute_condition = join(" && ", [
     "assertion.repository_id == '${var.github_repository_id}'",
     "assertion.repository_owner_id == '${var.github_owner_id}'",
-    "assertion.environment == '${var.github_environment}'",
+    "assertion.environment in ['${var.github_environment}', '${var.github_apply_environment}']",
   ])
 
   oidc {
@@ -58,7 +58,7 @@ resource "google_service_account" "plan" {
 resource "google_service_account_iam_member" "plan_federation" {
   service_account_id = google_service_account.plan.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.repository_id/${var.github_repository_id}"
+  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.environment/${var.github_environment}"
 }
 
 # Read access for a plan's refresh: network and subnet, cluster and node

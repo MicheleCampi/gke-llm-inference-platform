@@ -23,3 +23,9 @@ variable "github_environment" {
   type        = string
   default     = "terraform-plan"
 }
+
+variable "github_apply_environment" {
+  description = "GitHub environment the apply job must run in; required reviewer, main only"
+  type        = string
+  default     = "terraform-apply"
+}

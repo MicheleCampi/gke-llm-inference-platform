@@ -1,0 +1,79 @@
+name: apply
+
+# terraform apply from CI, started by hand, from main only. The plan job runs
+# as the read-only identity and saves the plan; the apply job waits in the
+# terraform-apply environment (required reviewer, main only) and applies
+# exactly that saved plan as a separate identity (bootstrap/ci-identity/apply.tf).
+# A plan made stale by a state change is refused. Not yet exercised: a first
+# run creates the GPU cluster and validates the apply role set.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-apply
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: terraform plan (saved for apply)
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: terraform-plan
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install pinned tools (inference-platform-ci, pinned in ci/platform-ci.env)
+        run: bash ci/install-tools.sh
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: projects/289089655949/locations/global/workloadIdentityPools/github-actions/providers/gke-llm-inference-platform
+          service_account: terraform-plan-ci@rosy-precinct-477218-u8.iam.gserviceaccount.com
+      - name: terraform plan -out
+        run: |
+          set -o pipefail
+          export PATH="$PWD/.ci-bin:$PATH"
+          terraform -chdir=terraform init -input=false -lockfile=readonly -no-color
+          terraform -chdir=terraform plan -input=false -lock=false -no-color -out=tfplan | tee plan.txt
+          { echo "### plan to approve"; echo '```'; tail -n 60 plan.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: tfplan
+          path: terraform/tfplan
+          retention-days: 1
+
+  apply:
+    name: terraform apply (the saved plan)
+    needs: plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    environment: terraform-apply
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install pinned tools (inference-platform-ci, pinned in ci/platform-ci.env)
+        run: bash ci/install-tools.sh
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: projects/289089655949/locations/global/workloadIdentityPools/github-actions/providers/gke-llm-inference-platform
+          service_account: terraform-apply-ci@rosy-precinct-477218-u8.iam.gserviceaccount.com
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: tfplan
+          path: terraform
+      - name: terraform apply tfplan
+        run: |
+          export PATH="$PWD/.ci-bin:$PATH"
+          terraform -chdir=terraform init -input=false -lockfile=readonly -no-color
+          terraform -chdir=terraform apply -input=false -no-color tfplan
