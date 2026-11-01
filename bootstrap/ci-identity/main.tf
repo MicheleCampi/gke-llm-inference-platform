@@ -85,3 +85,13 @@ resource "google_storage_bucket_iam_member" "plan_state" {
   role   = "roles/storage.objectViewer"
   member = "serviceAccount:${google_service_account.plan.email}"
 }
+
+# The plan adopts an IAM binding on the Grafana Cloud secret, so it must read
+# that secret's IAM policy. Viewer on this one secret: metadata and policy,
+# never the value (no secretmanager.versions.access).
+resource "google_secret_manager_secret_iam_member" "plan_reads_grafana_policy" {
+  project   = var.project_id
+  secret_id = "grafana-cloud-remote-write"
+  role      = "roles/secretmanager.viewer"
+  member    = "serviceAccount:${google_service_account.plan.email}"
+}
