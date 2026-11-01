@@ -11,7 +11,7 @@ metadata:
 spec:
   description: 'Team b: inference workloads in team-b only'
   sourceRepos:
-  - git@github.com:MicheleCampi/gke-llm-inference-platform.git
+  - https://github.com/MicheleCampi/gke-llm-inference-platform.git
   destinations:
   - server: https://kubernetes.default.svc
     namespace: team-b
@@ -33,7 +33,7 @@ metadata:
 spec:
   project: tenancy
   source:
-    repoURL: git@github.com:MicheleCampi/gke-llm-inference-platform.git
+    repoURL: https://github.com/MicheleCampi/gke-llm-inference-platform.git
     targetRevision: v0.5.0
     path: tenants/b
   destination:
@@ -56,7 +56,7 @@ metadata:
 spec:
   project: team-b
   source:
-    repoURL: git@github.com:MicheleCampi/gke-llm-inference-platform.git
+    repoURL: https://github.com/MicheleCampi/gke-llm-inference-platform.git
     targetRevision: v0.5.0
     path: teams/b
   destination:

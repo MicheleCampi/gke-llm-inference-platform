@@ -11,7 +11,7 @@ metadata:
 spec:
   description: 'Team demo: inference workloads in team-demo only'
   sourceRepos:
-  - git@github.com:MicheleCampi/gke-llm-inference-platform.git
+  - https://github.com/MicheleCampi/gke-llm-inference-platform.git
   destinations:
   - server: https://kubernetes.default.svc
     namespace: team-demo
@@ -33,7 +33,7 @@ metadata:
 spec:
   project: tenancy
   source:
-    repoURL: git@github.com:MicheleCampi/gke-llm-inference-platform.git
+    repoURL: https://github.com/MicheleCampi/gke-llm-inference-platform.git
     targetRevision: v0.5.0
     path: tenants/demo
   destination:
@@ -56,7 +56,7 @@ metadata:
 spec:
   project: team-demo
   source:
-    repoURL: git@github.com:MicheleCampi/gke-llm-inference-platform.git
+    repoURL: https://github.com/MicheleCampi/gke-llm-inference-platform.git
     targetRevision: v0.5.0
     path: teams/demo
   destination:

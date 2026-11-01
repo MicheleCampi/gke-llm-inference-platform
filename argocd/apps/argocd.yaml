@@ -17,7 +17,7 @@ spec:
         releaseName: argocd
         valueFiles:
           - $values/argocd/bootstrap-values.yaml
-    - repoURL: git@github.com:MicheleCampi/gke-llm-inference-platform.git
+    - repoURL: https://github.com/MicheleCampi/gke-llm-inference-platform.git
       targetRevision: v0.5.0
       ref: values
   destination:
