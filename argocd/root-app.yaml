@@ -10,7 +10,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: git@github.com:MicheleCampi/gke-llm-inference-platform.git
+    repoURL: https://github.com/MicheleCampi/gke-llm-inference-platform.git
     targetRevision: v0.5.0
     path: argocd/apps
     directory:

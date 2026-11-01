@@ -10,7 +10,7 @@ metadata:
 spec:
   description: Argo CD self-management and external-secrets
   sourceRepos:
-  - git@github.com:MicheleCampi/gke-llm-inference-platform.git
+  - https://github.com/MicheleCampi/gke-llm-inference-platform.git
   - https://argoproj.github.io/argo-helm
   - https://charts.external-secrets.io
   destinations:
@@ -35,7 +35,7 @@ metadata:
 spec:
   description: 'Operator and observability: 3 repos, 2 namespaces, 4 cluster kinds'
   sourceRepos:
-  - git@github.com:MicheleCampi/gke-llm-inference-platform.git
+  - https://github.com/MicheleCampi/gke-llm-inference-platform.git
   - https://github.com/MicheleCampi/vllm-coldstart-operator.git
   - https://grafana.github.io/helm-charts
   destinations:
@@ -67,7 +67,7 @@ metadata:
 spec:
   description: 'Team namespaces and quotas, owned by the platform'
   sourceRepos:
-  - git@github.com:MicheleCampi/gke-llm-inference-platform.git
+  - https://github.com/MicheleCampi/gke-llm-inference-platform.git
   destinations:
   - server: https://kubernetes.default.svc
     namespace: 'team-*'

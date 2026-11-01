@@ -226,13 +226,8 @@ account of `.github/workflows/plan.yml`.
     helm install argocd argo/argo-cd --version 9.5.21 --namespace argocd \
       --create-namespace -f argocd/bootstrap-values.yaml --wait --timeout 10m
 
-    # ArgoCD reads this repository over SSH, with a read-only deploy key
-    kubectl create secret generic capstone-repo --namespace argocd \
-      --from-literal=type=git \
-      --from-literal=url=git@github.com:MicheleCampi/gke-llm-inference-platform.git \
-      --from-file=sshPrivateKey=PATH_TO_DEPLOY_KEY
-    kubectl label secret capstone-repo -n argocd \
-      argocd.argoproj.io/secret-type=repository
+    # ArgoCD reads this public repository over HTTPS: no deploy key, no secret.
+    # A private repository would use a GitHub App, its key in Secret Manager via external-secrets.
 
     kubectl apply -f argocd/root-app.yaml      # the only manual apply
     cd terraform && terraform destroy          # stop the meter
