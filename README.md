@@ -261,10 +261,12 @@ account of `.github/workflows/plan.yml`.
   `terraform validate`, trivy and the CI self-test, but has not been applied
   to a live cluster yet. There is no identity per team: RBAC per team needs
   Google Groups for RBAC.
-- One trivy finding is accepted until the next live run, in
-  [`.trivyignore`](.trivyignore): nodes
-  that are not private (GCP-0059), since private nodes need Cloud NAT to pull
-  the vLLM image and the model weights.
+- Two trivy findings are accepted, each with a reason and an expiry, in
+  [`.trivyignore`](.trivyignore): nodes that are not private (GCP-0059),
+  since private nodes need Cloud NAT to pull the vLLM image and the model
+  weights; and project-wide service-account roles for the CI apply identity
+  (GCP-0011), to be scoped to the accounts Terraform creates once the first
+  apply from CI proves the role set.
 
 ## License
 

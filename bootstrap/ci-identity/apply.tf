@@ -27,7 +27,8 @@ resource "google_project_iam_member" "apply" {
 }
 
 # Project IAM admin, but it may grant or revoke only the one project role
-# terraform/ grants (the node service account's): no path to escalate.
+# terraform/ grants (the node service account's). The service-account roles
+# above are still project-wide: accepted in .trivyignore (GCP-0011).
 resource "google_project_iam_member" "apply_grants" {
   project = var.project_id
   role    = "roles/resourcemanager.projectIamAdmin"
