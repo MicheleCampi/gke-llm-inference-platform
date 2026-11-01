@@ -3,7 +3,7 @@ import glob, os, sys
 import yaml
 
 root = sys.argv[1] if len(sys.argv) > 1 else "."
-REPO = "git@github.com:MicheleCampi/gke-llm-inference-platform.git"
+REPO = "https://github.com/MicheleCampi/gke-llm-inference-platform.git"
 GROUP = "inference.michelecampi.dev"
 errs = []
 
