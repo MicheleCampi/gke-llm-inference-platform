@@ -44,6 +44,11 @@ resource "google_container_cluster" "this" {
 
   resource_labels = var.resource_labels
 
+  # GKE cost allocation: billing export split by namespace and pod label (per-team cost).
+  cost_management_config {
+    enabled = true
+  }
+
   # The control plane accepts connections only from the cluster's nodes and
   # from var.authorized_networks, empty by default. Operators pass their own
   # CIDR at apply time (README, Run it); no address is kept in the repository.
@@ -142,6 +147,10 @@ resource "google_container_node_pool" "gpu" {
       workload = "gpu-inference"
     }
 
+    resource_labels = {
+      pool = "gpu"
+    }
+
     # The API sets this since GKE 1.12; declared so that Terraform never tries
     # to unset it (provider docs, node_config.metadata).
     metadata = {
@@ -187,6 +196,10 @@ resource "google_container_node_pool" "system" {
 
     labels = {
       workload = "system"
+    }
+
+    resource_labels = {
+      pool = "system"
     }
 
     # The API sets this since GKE 1.12; declared so that Terraform never tries
