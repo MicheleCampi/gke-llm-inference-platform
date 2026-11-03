@@ -108,6 +108,9 @@ variable "resource_labels" {
   default = {
     environment = "lab"
     managed-by  = "terraform"
+    team        = "platform"
+    cost-center = "inference"
+    project     = "llm-inference"
   }
 }
 
