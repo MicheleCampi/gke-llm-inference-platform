@@ -37,8 +37,11 @@ jobs:
           workload_identity_provider: projects/289089655949/locations/global/workloadIdentityPools/github-actions/providers/gke-llm-inference-platform
           service_account: terraform-plan-ci@rosy-precinct-477218-u8.iam.gserviceaccount.com
       - name: terraform plan -out
+        env:
+          AUTHORIZED_NETWORKS: ${{ secrets.AUTHORIZED_NETWORKS }}
         run: |
           set -o pipefail
+          if [ -n "$AUTHORIZED_NETWORKS" ]; then export TF_VAR_authorized_networks="$AUTHORIZED_NETWORKS"; fi
           export PATH="$PWD/.ci-bin:$PATH"
           terraform -chdir=terraform init -input=false -lockfile=readonly -no-color
           terraform -chdir=terraform plan -input=false -lock=false -no-color -out=tfplan | tee plan.txt

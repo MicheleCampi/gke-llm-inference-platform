@@ -57,5 +57,6 @@ variable "authorized_networks" {
     cidr_block   = string
     display_name = string
   }))
-  default = []
+  default   = []
+  sensitive = true
 }
