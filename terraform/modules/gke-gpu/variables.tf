@@ -68,7 +68,7 @@ variable "max_gpu_nodes" {
 variable "gpu_node_locations" {
   description = "Zones the GPU node pool may use; the autoscaler picks one with capacity"
   type        = list(string)
-  default     = ["us-central1-a", "us-central1-b", "us-central1-c"]
+  default     = ["us-east1-b", "us-east1-c", "us-east1-d"]
 }
 
 # --- System node pool (CPU): runs ArgoCD, the operator and Alloy. ---
@@ -90,7 +90,7 @@ variable "system_max_nodes" {
 variable "system_node_locations" {
   description = "System-pool zones. One zone = 1 node (no HA, lowest cost)"
   type        = list(string)
-  default     = ["us-central1-a"]
+  default     = ["us-east1-b"]
 }
 
 variable "authorized_networks" {
