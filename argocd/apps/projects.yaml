@@ -65,7 +65,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: '-1'
 spec:
-  description: 'Team namespaces and quotas, owned by the platform'
+  description: 'Team namespaces, quotas and team identity (RBAC), owned by the platform'
   sourceRepos:
   - https://github.com/MicheleCampi/gke-llm-inference-platform.git
   destinations:
@@ -81,3 +81,9 @@ spec:
     kind: LimitRange
   - group: networking.k8s.io
     kind: NetworkPolicy
+  - group: ''
+    kind: ServiceAccount
+  - group: rbac.authorization.k8s.io
+    kind: Role
+  - group: rbac.authorization.k8s.io
+    kind: RoleBinding
