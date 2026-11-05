@@ -11,6 +11,11 @@ spec:
   warmupStrategy: Eager
   image: "vllm/vllm-openai:v0.11.0"
   gpu: 1
+  # Sized for a g2-standard-4 (4 vCPU / 16GB, ~3.5 CPU / ~12Gi allocatable).
+  # Weights live in VRAM; RAM is for the process and loading. Estimate,
+  # to be replaced by the working set measured on the first GPU run.
+  cpu: "3"
+  memory: "11Gi"
   objective:
     # Declared by the team. Same as the platform default (ADR-0013), stated explicitly. Budget is the team declaration, compared with measured cost (ADR-0025).
     ttftSeconds: 1.0

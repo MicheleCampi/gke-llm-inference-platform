@@ -6,12 +6,16 @@ metadata:
 spec:
   limits:
     - type: Container
+      # Defaults are a safety net for small pods that declare nothing.
+      # Workloads that need more declare it: VllmService spec.cpu/memory
+      # (operator #77). Default CPU limit = max.cpu: a lower default limit
+      # would reject any larger CPU request that sets no limit of its own.
       defaultRequest:
-        cpu: "2"
-        memory: 12Gi
+        cpu: 100m
+        memory: 128Mi
       default:
-        cpu: "4"
-        memory: 16Gi
+        cpu: "8"
+        memory: 512Mi
       max:
         cpu: "8"
         memory: 32Gi
