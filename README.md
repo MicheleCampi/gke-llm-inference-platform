@@ -219,7 +219,7 @@ account of `.github/workflows/plan.yml`.
     export TF_VAR_authorized_networks='[{cidr_block="YOUR_IP/32",display_name="operator"}]'
     cd terraform && terraform init && terraform apply && cd ..
     gcloud container clusters get-credentials capstone-inference \
-      --region us-central1 --project PROJECT_ID
+      --region us-east1 --project PROJECT_ID
 
     # ArgoCD, once; from here on it manages itself
     helm repo add argo https://argoproj.github.io/argo-helm && helm repo update argo
@@ -230,7 +230,10 @@ account of `.github/workflows/plan.yml`.
     # A private repository would use a GitHub App, its key in Secret Manager via external-secrets.
 
     kubectl apply -f argocd/root-app.yaml      # the only manual apply
-    cd terraform && terraform destroy          # stop the meter
+    # stop the meter: targeted, so the ESO service account and its secret binding survive
+    T='-target=module.gke_gpu -target=google_compute_subnetwork.subnet -target=google_compute_network.vpc'
+    cd terraform && terraform plan -destroy $T  # read the list first
+    terraform destroy $T
 
 See [docs/upgrade-and-dr.md](docs/upgrade-and-dr.md) for upgrades and disaster recovery.
 
