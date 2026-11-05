@@ -5,6 +5,8 @@ import yaml
 root = sys.argv[1] if len(sys.argv) > 1 else "."
 REPO = "https://github.com/MicheleCampi/gke-llm-inference-platform.git"
 GROUP = "inference.michelecampi.dev"
+PROTECTED = {"resourcequotas", "limitranges", "networkpolicies", "roles", "rolebindings"}
+WRITE = {"create", "update", "patch", "delete", "deletecollection", "escalate", "bind", "impersonate"}
 errs = []
 
 
@@ -48,8 +50,8 @@ for f in files:
     if not any(d["kind"] == "ResourceQuota" and d["metadata"].get("namespace") == ns
                and "requests.nvidia.com/gpu" in d["spec"].get("hard", {}) for d in ten):
         errs.append(f"{t}: tenants/{t} has no GPU quota")
-    # The operator sets only the GPU limit, so CPU/memory are capped by quota and
-    # filled in by LimitRange defaults; without the defaults every pod is rejected.
+    # Quota caps CPU/memory; pods that declare none (the operator sets them only when the
+    # spec does, since v0.9.0) get LimitRange defaults, without which they are rejected.
     if not any(d["kind"] == "ResourceQuota" and d["metadata"].get("namespace") == ns
                and {"requests.cpu", "requests.memory"} <= set(d["spec"].get("hard", {})) for d in ten):
         errs.append(f"{t}: tenants/{t} quota does not cap CPU and memory")
@@ -64,6 +66,23 @@ for f in files:
                and d["spec"].get("podSelector") == {} and "Ingress" in d["spec"].get("policyTypes", [])
                for d in ten):
         errs.append(f"{t}: tenants/{t} has no default-deny ingress NetworkPolicy")
+    # Team identity: a Role bound only to the team's own ServiceAccounts; the Role may not
+    # use wildcards nor change the limits the platform set (quota, LimitRange, policy, RBAC).
+    roles = {d["metadata"]["name"]: d for d in ten if d["kind"] == "Role" and d["metadata"].get("namespace") == ns}
+    sas = {d["metadata"]["name"] for d in ten if d["kind"] == "ServiceAccount" and d["metadata"].get("namespace") == ns}
+    if not any(d["kind"] == "RoleBinding" and d["metadata"].get("namespace") == ns
+               and d["roleRef"].get("kind") == "Role" and d["roleRef"].get("name") in roles
+               and d.get("subjects") and all(x.get("kind") == "ServiceAccount" and x.get("name") in sas
+                                             and x.get("namespace", ns) == ns for x in d["subjects"])
+               for d in ten):
+        errs.append(f"{t}: tenants/{t} has no RoleBinding of a team Role to a team ServiceAccount")
+    for name, r in sorted(roles.items()):
+        for rule in r.get("rules") or []:
+            if "*" in (rule.get("apiGroups") or []) + (rule.get("resources") or []) + (rule.get("verbs") or []):
+                errs.append(f"{t}: Role {name} uses a wildcard")
+            hit = set(rule.get("resources") or []) & PROTECTED
+            if hit and set(rule.get("verbs") or []) & WRITE:
+                errs.append(f"{t}: Role {name} may change {', '.join(sorted(hit))}")
     for g in sorted(glob.glob(os.path.join(root, "teams", t, "*.yaml"))):
         for d in docs(g):
             if d["metadata"].get("namespace", ns) != ns:
