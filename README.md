@@ -10,6 +10,21 @@ the L4. GCP twin of
 [eks-llm-inference-platform](https://github.com/MicheleCampi/eks-llm-inference-platform):
 the same operator, deployed through an ArgoCD app-of-apps, on a different cloud.
 
+**What it shows**
+
+- **Terraform on GKE**: a regional cluster with a scale-to-zero L4 pool across
+  three zones, flex-start provisioning and a 4 h cap, nodes on a least-privilege
+  service account ([Design decisions](#design-decisions)).
+- **GitOps**: ArgoCD installed once and then managing itself, sync waves, and
+  secrets from Secret Manager through Workload Identity, with no keys in git.
+- **Multi-tenancy**: a namespace per team with GPU quota and deny-all
+  NetworkPolicy, onboarded by one command and checked in CI ([Teams](#teams)).
+- **CI without credentials**: SHA-256-pinned tools, trivy, `kubeconform`
+  against the deployed CRDs, seven broken inputs that must each be rejected,
+  and a keyless `terraform plan` on pull requests behind a required reviewer
+  ([Continuous integration](#continuous-integration)).
+- **Evidence**: one end-to-end run on a real L4 GPU, recorded below.
+
 **End to end on a real GPU, 2026-06-14**
 ([evidence](docs/evidence/e2e-2026-06-14/)): six ArgoCD Applications, all
 Healthy and all Synced except `monitoring` (see Limits); the `qwen-7b`
@@ -32,7 +47,7 @@ is in [docs/phase3-narrative.md](docs/phase3-narrative.md).
         ├── argocd                    chart argo-cd 9.5.21        wave -1
         ├── external-secrets          chart 2.6.0                 wave -1
         ├── monitoring                SA, SecretStore, ExternalSecret  wave 0
-        ├── vllm-coldstart-operator   v0.8.0, qwen-7b on the L4   wave 0
+        ├── vllm-coldstart-operator   v0.9.0, qwen-7b on the L4   wave 0
         └── alloy                     chart 1.10.0 -> Grafana Cloud wave 1
       tenants/<team>/  namespace, GPU ResourceQuota, LimitRange, deny-all NetworkPolicy
 
@@ -183,35 +198,9 @@ place. The plan workflow adds `google-github-actions/auth`, pinned by commit.
 
 ## Bootstrap (one-time, out of band)
 
-These resources are created with `gcloud`, outside Terraform, and survive
-`terraform destroy`; the CI identity, last below, is the exception: a Terraform
-root of its own, applied once. `PROJECT_ID` is your project; this repository's own value
-appears in `terraform/terraform.tfvars`, in the bucket name of
-`terraform/versions.tf`, twice in `monitoring/grafana-secret.yaml`, in
-`bootstrap/ci-identity/terraform.tfvars` and `versions.tf`, and in the service
-account of `.github/workflows/plan.yml`.
-
-    # Terraform state bucket
-    gcloud storage buckets create gs://PROJECT_ID-tfstate --project=PROJECT_ID \
-      --location=europe-west4 --default-storage-class=STANDARD \
-      --uniform-bucket-level-access --public-access-prevention
-    gcloud storage buckets update gs://PROJECT_ID-tfstate --versioning
-
-    # Grafana Cloud remote-write credentials, as JSON with url, user, token
-    gcloud services enable secretmanager.googleapis.com
-    gcloud secrets create grafana-cloud-remote-write \
-      --replication-policy="user-managed" --locations="europe-west4"
-    printf '%s' '{"url":"...","user":"...","token":"..."}' | \
-      gcloud secrets versions add grafana-cloud-remote-write --data-file=-
-
-    # The GCP service account external-secrets runs as, its access to this secret
-    # and its Workload Identity binding: terraform/eso-identity.tf (terraform apply)
-
-    # CI identity for the plan workflow (set the IDs in its terraform.tfvars)
-    cd bootstrap/ci-identity && terraform init && terraform apply && cd ../..
-    # The environment the plan job runs in, with you as required reviewer
-    printf '%s' '{"wait_timer":0,"prevent_self_review":false,"reviewers":[{"type":"User","id":YOUR_GITHUB_USER_ID}],"deployment_branch_policy":null}' | \
-      gh api -X PUT repos/OWNER/REPO/environments/terraform-plan --input -
+The state bucket, the Grafana Cloud secret and the CI identity are created
+once, outside the cluster's Terraform root, and survive `terraform destroy`:
+see [docs/bootstrap.md](docs/bootstrap.md).
 
 ## Run it
 
@@ -244,7 +233,7 @@ See [docs/upgrade-and-dr.md](docs/upgrade-and-dr.md) for upgrades and disaster r
   been applied to a live cluster.
 - One GPU node and the default rolling-update strategy: finding 4 can recur.
 - Lab profile: non-HA ArgoCD, a single-zone system pool.
-- The bootstrap above is outside Terraform, except the CI identity, a Terraform
+- The [bootstrap](docs/bootstrap.md) is outside Terraform, except the CI identity, a Terraform
   root applied by hand.
 - Alloy ships the operator's metrics to Grafana Cloud; there are no alerting
   rules or dashboards in this repository.
