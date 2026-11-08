@@ -222,14 +222,12 @@ account of `.github/workflows/plan.yml`.
       --region us-east1 --project PROJECT_ID
 
     # ArgoCD, once; from here on it manages itself
-    helm repo add argo https://argoproj.github.io/argo-helm && helm repo update argo
-    helm install argocd argo/argo-cd --version 9.5.21 --namespace argocd \
-      --create-namespace -f argocd/bootstrap-values.yaml --wait --timeout 10m
+    # chart version from argocd/apps/argocd.yaml, helm pull with retry, then root-app
+    scripts/bootstrap-argocd.sh
 
     # ArgoCD reads this public repository over HTTPS: no deploy key, no secret.
     # A private repository would use a GitHub App, its key in Secret Manager via external-secrets.
 
-    kubectl apply -f argocd/root-app.yaml      # the only manual apply
     # stop the meter: targeted. The ESO service account and its secret read grant survive;
     # the Workload Identity binding depends on the cluster, is destroyed with it and comes back on the next apply
     T='-target=module.gke_gpu -target=google_compute_subnetwork.subnet -target=google_compute_network.vpc'
