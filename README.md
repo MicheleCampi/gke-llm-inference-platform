@@ -58,12 +58,12 @@ which fails if a team lacks its quota, its LimitRange or the deny-all policy.
   references only; the credentials reach the cluster as a Secret that
   external-secrets creates at runtime.
 - **Scale-to-zero GPU pool.** `gpu-pool` runs 0 to 1 nodes in total across
-  `us-central1-a/b/c`, the three L4 zones of the region: the autoscaler takes
+  `us-east1-b/c/d`, the three L4 zones of the region: the autoscaler takes
   the first zone with L4 capacity (`location_policy = "ANY"`), so a stockout
   in one zone does not block scale-up. A stockout in every zone does: on
   2026-10-24 all L4 zones of europe-west4 (a, b, c) and of europe-west1 (b, c)
-  were exhausted and the Pod stayed Pending, which is why the cluster moved
-  here. On a stockout in every zone the scale-up stays queued (the Pod shows
+  were exhausted and the Pod stayed Pending, so the cluster moved to
+  us-central1; after a stockout there too it moved to us-east1 (#31, 2026-11-04). On a stockout in every zone the scale-up stays queued (the Pod shows
   FailedScaleUp events while it waits): the pool uses flex-start provisioning
   (on-demand price), and `max_run_duration = "14400s"` stops the GPU node
   after 4 h. It carries the taint `nvidia.com/gpu=present:NoSchedule`.
