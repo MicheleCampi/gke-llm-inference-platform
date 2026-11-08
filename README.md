@@ -230,7 +230,8 @@ account of `.github/workflows/plan.yml`.
     # A private repository would use a GitHub App, its key in Secret Manager via external-secrets.
 
     kubectl apply -f argocd/root-app.yaml      # the only manual apply
-    # stop the meter: targeted, so the ESO service account and its secret binding survive
+    # stop the meter: targeted. The ESO service account and its secret read grant survive;
+    # the Workload Identity binding depends on the cluster, is destroyed with it and comes back on the next apply
     T='-target=module.gke_gpu -target=google_compute_subnetwork.subnet -target=google_compute_network.vpc'
     cd terraform && terraform plan -destroy $T  # read the list first
     terraform destroy $T
