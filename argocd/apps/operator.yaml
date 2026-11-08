@@ -15,29 +15,6 @@ spec:
     path: chart
     helm:
       releaseName: vllm-coldstart-operator
-      # Phase 3: drive a real vLLM pod on the GKE L4 gpu-pool. The chart's
-      # default example is the gpu=0 CI placeholder; override it with the
-      # qwen-7b serving spec. extraArgs values are quoted so they stay
-      # strings (the CRD types extraArgs as array<string>); passing them via
-      # Helm --set would coerce 8192/0.90 to numbers and the API server would
-      # reject the CR. runtimeClassName is left unset: on GKE the device
-      # plugin uses the default runtime and ExtendedResourceToleration injects
-      # the nvidia.com/gpu toleration, so no RuntimeClass is needed.
-      values: |
-        example:
-          name: qwen-7b
-          spec:
-            model: "Qwen/Qwen2.5-7B-Instruct"
-            replicas: 1
-            warmupStrategy: Eager
-            image: "vllm/vllm-openai:v0.11.0"
-            gpu: 1
-            healthPath: "/health"
-            extraArgs:
-              - "--max-model-len"
-              - "8192"
-              - "--gpu-memory-utilization"
-              - "0.90"
   destination:
     server: https://kubernetes.default.svc
     namespace: vllm-system
