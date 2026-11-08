@@ -23,7 +23,14 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Cache pinned tools (keyed on pin + installer)
+        id: tools-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .ci-bin
+          key: ci-bin-${{ runner.os }}-${{ hashFiles('ci/platform-ci.env', 'ci/install-tools.sh') }}
       - name: Install pinned tools (inference-platform-ci, pinned in ci/platform-ci.env)
+        if: steps.tools-cache.outputs.cache-hit != 'true'
         run: bash ci/install-tools.sh
       - name: Validate, then self-test the checks
         run: bash ci/validate.sh
