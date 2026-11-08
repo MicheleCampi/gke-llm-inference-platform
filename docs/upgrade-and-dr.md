@@ -4,7 +4,7 @@ What the platform does today, and what it does not do yet.
 
 ## Kubernetes upgrades
 
-- Regional cluster (`location = var.region`, default `us-central1`): the control plane is replicated across zones, so a control-plane upgrade does not take the API down.
+- Regional cluster (`location = var.region`, default `us-east1`): the control plane is replicated across zones, so a control-plane upgrade does not take the API down.
 - Enrolled in a GKE release channel (`var.release_channel`, default `REGULAR`): Google rolls minor and patch versions; we do not pin a GKE version by hand.
 - Both node pools have `auto_upgrade = true` and `auto_repair = true`.
 - Not yet: no maintenance window or exclusion, so upgrades can land at any time; no explicit surge or blue-green upgrade settings, so the GKE defaults apply. For a serving workload, the next steps are a maintenance window outside peak hours and PodDisruptionBudgets on the inference pods.
