@@ -4,9 +4,9 @@ variable "project_id" {
 }
 
 variable "region" {
-  description = "GCP region (e.g. us-east1)"
+  description = "GCP region (e.g. us-central1)"
   type        = string
-  default     = "us-east1"
+  default     = "us-central1"
 }
 
 variable "cluster_name" {
@@ -48,7 +48,7 @@ variable "max_gpu_nodes" {
 variable "gpu_node_locations" {
   description = "GPU node pool zones; the autoscaler picks one with capacity"
   type        = list(string)
-  default     = ["us-east1-b", "us-east1-c", "us-east1-d"]
+  default     = ["us-central1-a", "us-central1-b", "us-central1-c"]
 }
 
 variable "authorized_networks" {
