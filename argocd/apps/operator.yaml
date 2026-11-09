@@ -15,6 +15,12 @@ spec:
     path: chart
     helm:
       releaseName: vllm-coldstart-operator
+      # The chart ships an example VllmService by default. Here the models
+      # come from the tenant apps (team-demo), so the example only competed
+      # for the single L4: it stayed Pending all of B-009 (D-0139).
+      valuesObject:
+        example:
+          enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: vllm-system
