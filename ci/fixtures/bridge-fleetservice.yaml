@@ -1,0 +1,21 @@
+# Rendered by model-promotion-bridge 097557c (build_manifest, kind=FleetService).
+# CI validates it against the fleetservices CRD of the pinned operator tag.
+apiVersion: inference.michelecampi.dev/v1alpha1
+kind: FleetService
+metadata:
+  name: qwen-05b-fleet
+  namespace: team-demo
+  annotations:
+    model.michelecampi.dev/registry-name: qwen-0.5b
+    model.michelecampi.dev/registry-version: '3'
+    model.michelecampi.dev/registry-alias: production
+    model.michelecampi.dev/source: hf://Qwen/Qwen2.5-0.5B-Instruct
+    model.michelecampi.dev/revision: 7ae557604adf67be50417f59c2c2f167def9a775
+spec:
+  model: Qwen/Qwen2.5-0.5B-Instruct
+  replicas: 2
+  template:
+    gpu: 1
+    extraArgs:
+    - --revision
+    - 7ae557604adf67be50417f59c2c2f167def9a775
