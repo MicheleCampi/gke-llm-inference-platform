@@ -82,7 +82,7 @@ check operator-src sh -c "git init -q '$W/op' && git -C '$W/op' fetch -q --depth
 check operator-tag-commit tag_is "$W/op" "$OPERATOR_TAG" "$OPERATOR_COMMIT"
 helm template argocd "$W/argo-cd-$ARGOCD_CHART_VERSION.tgz" 2>/dev/null | python3 "$W/served.py" applications.argoproj.io appprojects.argoproj.io > "$W/crd-argo.yaml"
 helm template eso "$W/external-secrets-$ESO_CHART_VERSION.tgz" 2>/dev/null | python3 "$W/served.py" secretstores.external-secrets.io externalsecrets.external-secrets.io > "$W/crd-eso.yaml"
-python3 "$W/served.py" vllmservices.inference.michelecampi.dev < "$W/op/chart/crds/crd.yaml" > "$W/crd-op.yaml"
+python3 "$W/served.py" vllmservices.inference.michelecampi.dev fleetservices.inference.michelecampi.dev < "$W/op/chart/crds/crd.yaml" > "$W/crd-op.yaml"
 for g in argoproj.io:argo external-secrets.io:eso inference.michelecampi.dev:op; do
   mkdir -p "$W/schemas/${g%%:*}" && (cd "$W/schemas/${g%%:*}" && python3 "$CI_BIN/openapi2jsonschema.py" "$W/crd-${g##*:}.yaml" >/dev/null)
 done
@@ -97,6 +97,11 @@ grep -h Summary "$W/manifests.log" | sed 's/^/  /'
 
 echo "== tenancy: each team is confined to its namespace and has a GPU quota"
 check tenancy python3 ci/check-tenancy.py .
+
+echo "== bridge output: a FleetService rendered by model-promotion-bridge is accepted"
+check bridge-fleetservice "${KC[@]}" ci/fixtures/bridge-fleetservice.yaml
+mkdir -p "$W/fleet" && cp -r argocd tenants teams "$W/fleet/" && cp ci/fixtures/bridge-fleetservice.yaml "$W/fleet/teams/demo/"
+check bridge-fleetservice-tenancy python3 ci/check-tenancy.py "$W/fleet"
 
 echo "== operator values, rendered with the operator chart"
 yq '.spec.source.helm.values' argocd/apps/operator.yaml > "$W/op-values.yaml"
@@ -147,6 +152,8 @@ yq -i '(select(.kind == "Role") | .rules[] | select(.resources[0] == "networkpol
 expect_reject neg-role-edits-policy "may change networkpolicies" python3 ci/check-tenancy.py "$W/neg-ten6"
 yq '(select(.kind=="VllmService") | .spec.objective.percentile) = 100' teams/demo/qwen-7b.yaml > "$W/neg-objective.yaml"
 expect_reject neg-objective-out-of-range "99.9" "${KC[@]}" "$W/neg-objective.yaml"
+yq '.spec.gpu = 1' ci/fixtures/bridge-fleetservice.yaml > "$W/neg-fleet-gpu.yaml"
+expect_reject neg-fleet-gpu-outside-template "additional properties 'gpu' not allowed" "${KC[@]}" "$W/neg-fleet-gpu.yaml"
 expect_reject neg-tag-not-pinned-commit "resolves to $OPERATOR_COMMIT, not the pinned" tag_is "$W/op" "$OPERATOR_TAG" 0000000000000000000000000000000000000000
 
 sed 's/prometheus.scrape "vllm"/prometheus.scrapez "vllm"/' "$W/alloy.alloy" > "$W/neg-alloy.alloy"
