@@ -7,7 +7,10 @@ metadata:
   namespace: team-demo
 spec:
   model: "Qwen/Qwen2.5-7B-Instruct"
-  replicas: 1
+  # 0 while the bridge-rendered FleetService qwen-7b-fleet holds the
+  # team's one L4 (quota.yaml). Kept for the objective and budget the
+  # team declares, which FleetServiceSpec does not carry yet.
+  replicas: 0
   warmupStrategy: Eager
   image: "vllm/vllm-openai:v0.11.0"
   gpu: 1
