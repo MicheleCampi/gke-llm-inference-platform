@@ -18,7 +18,7 @@ spec:
         valueFiles:
           - $values/argocd/bootstrap-values.yaml
     - repoURL: https://github.com/MicheleCampi/gke-llm-inference-platform.git
-      targetRevision: v0.8.2
+      targetRevision: v0.8.3
       ref: values
   destination:
     server: https://kubernetes.default.svc

@@ -12,6 +12,9 @@ metadata:
   namespace: team-demo
 spec:
   model: Qwen/Qwen2.5-7B-Instruct
+  nodePool:
+    selector:
+      cloud.google.com/gke-nodepool: gpu-pool
   replicas: 1
   template:
     cpu: '3'
