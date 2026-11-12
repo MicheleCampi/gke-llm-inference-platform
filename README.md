@@ -223,8 +223,12 @@ see [docs/bootstrap.md](docs/bootstrap.md).
     # stop the meter: targeted. The ESO service account and its secret read grant survive;
     # the Workload Identity binding depends on the cluster, is destroyed with it and comes back on the next apply
     T='-target=module.gke_gpu -target=google_compute_subnetwork.subnet -target=google_compute_network.vpc'
-    cd terraform && terraform plan -destroy $T  # read the list first
-    terraform destroy $T
+    # authorized_networks has no default value: pass a list of objects, e.g.
+    # export TF_VAR_authorized_networks='[{cidr_block="203.0.113.7/32",display_name="me"}]'
+    cd terraform && terraform plan -destroy $T -out=destroy.tfplan  # read the list first
+    # apply only the plan that was read, and only if it deletes exactly 8 resources
+    test "$(terraform show -json destroy.tfplan | jq '[.resource_changes[] | select(.change.actions == ["delete"])] | length')" = 8 \
+      && terraform apply destroy.tfplan
 
 See [docs/upgrade-and-dr.md](docs/upgrade-and-dr.md) for upgrades and disaster recovery.
 
