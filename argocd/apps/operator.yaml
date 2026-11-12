@@ -21,6 +21,20 @@ spec:
       valuesObject:
         example:
           enabled: false
+        # D-0145: the reporter is the only writer of NodeState; without it a
+        # FleetService with no nodePool.selector never places. GPU nodes only,
+        # tolerating the GKE GPU taint; GKE injects NVML, so no runtimeClass.
+        reporter:
+          enabled: true
+          nodeSelector:
+            cloud.google.com/gke-nodepool: gpu-pool
+          tolerations:
+            - key: nvidia.com/gpu
+              operator: Exists
+              effect: NoSchedule
+          extraEnv:
+            - name: REPORTER_GPU
+              value: nvidia
   destination:
     server: https://kubernetes.default.svc
     namespace: vllm-system
