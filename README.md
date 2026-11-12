@@ -214,6 +214,9 @@ see [docs/bootstrap.md](docs/bootstrap.md).
     # chart version from argocd/apps/argocd.yaml, helm pull with retry, then root-app
     scripts/bootstrap-argocd.sh
 
+    # after every signed tag: root is pinned to a tag and cannot follow the next one
+    scripts/promote-tag.sh vX.Y.Z
+
     # ArgoCD reads this public repository over HTTPS: no deploy key, no secret.
     # A private repository would use a GitHub App, its key in Secret Manager via external-secrets.
 
