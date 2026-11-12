@@ -17,3 +17,4 @@ done
 helm install argocd "$D/argo-cd-$V.tgz" --namespace argocd --create-namespace \
   -f argocd/bootstrap-values.yaml --wait --timeout 10m
 kubectl apply -f argocd/root-app.yaml
+echo "after every new tag: scripts/promote-tag.sh vX.Y.Z (root does not follow tags by itself)"
