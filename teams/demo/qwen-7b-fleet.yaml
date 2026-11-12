@@ -11,10 +11,16 @@ metadata:
   name: qwen-7b-fleet
   namespace: team-demo
 spec:
+  budget:
+    eurPerMonth: 500
   model: Qwen/Qwen2.5-7B-Instruct
   nodePool:
+    provisionOnEmpty: true
     selector:
       cloud.google.com/gke-nodepool: gpu-pool
+  objective:
+    percentile: 95
+    ttftSeconds: 1.0
   replicas: 1
   template:
     cpu: '3'
