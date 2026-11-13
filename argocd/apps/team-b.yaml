@@ -34,7 +34,7 @@ spec:
   project: tenancy
   source:
     repoURL: https://github.com/MicheleCampi/gke-llm-inference-platform.git
-    targetRevision: v0.8.4
+    targetRevision: v0.8.5
     path: tenants/b
   destination:
     server: https://kubernetes.default.svc
@@ -57,7 +57,7 @@ spec:
   project: team-b
   source:
     repoURL: https://github.com/MicheleCampi/gke-llm-inference-platform.git
-    targetRevision: v0.8.4
+    targetRevision: v0.8.5
     path: teams/b
   destination:
     server: https://kubernetes.default.svc
