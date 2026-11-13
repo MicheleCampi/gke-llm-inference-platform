@@ -11,7 +11,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/MicheleCampi/gke-llm-inference-platform.git
-    targetRevision: v0.8.4
+    targetRevision: v0.8.5
     path: argocd/apps
     directory:
       recurse: false
